@@ -1,0 +1,3 @@
+# Ignore object and binary files
+# in this directory
+*.o *.exe *.mod

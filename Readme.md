@@ -1,4 +1,4 @@
-# CONTRAST - COrrelatioN funcTion foR ASTrophysics
+# CONTRAST - COrrelatioN funcTions foR ASTrophysics
 
 Yet another package for computing two-point correlation functions ;-)
 
