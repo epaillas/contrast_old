@@ -1,6 +1,7 @@
 import sys
 import subprocess
-from utilities import Utilities
+import os
+from python_tools.utilities import Utilities
 
 class Correlator:
 
@@ -15,29 +16,42 @@ class Correlator:
                  dim1_nbin,
                  dim2_min,
                  dim2_max,
-                 dim2_nbin
-                 ):
+                 dim2_nbin):
 
         # declare attributes
         self.handle = handle
         self.box_size = box_size
-        self.data_filename = data_filename
-        self.data_filename_2 = data_filename_2
+        self.corr_type = corr_type
+
+        if os.path.isfile(data_filename):
+            self.data_filename = data_filename
+        else:
+            sys.exit('{} not found.'.format(data_filename))
+
+        if 'CCF' in self.corr_type:
+            if os.path.isfile(data_filename_2):
+                self.data_filename_2 = data_filename_2
+            else:
+                sys.exit('{} not found.'.format(data_filename_2))
+        
         self.dim1_min = dim1_min
         self.dim2_min = dim2_min
         self.dim1_max = dim1_max
         self.dim2_max = dim2_max
         self.dim1_nbin = dim1_nbin
         self.dim2_nbin = dim2_nbin
-        self.corr_type = corr_type
-        self.ngrid = Utilities.next_pow_two(self.box_size)
+
+        # find the maximum power of two that is
+        # smaller than one 1/10th of the box size
+        self.ngrid = Utilities.next_pow_two(int(self.box_size/10))
 
         print('Running contrast with the following parameters:\n')
         print('handle: {}'.format(self.handle))
-        print('ngrid: '{}.format(self.ngrid))
+        print('ngrid: {}'.format(self.ngrid))
 
         # run the desired correlation function
         getattr(self, corr_type)()
+
 
 
     def CF_monopole(self):
