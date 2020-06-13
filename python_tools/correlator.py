@@ -41,8 +41,7 @@ class Correlator:
         self.dim1_nbin = dim1_nbin
         self.dim2_nbin = dim2_nbin
 
-        # find the maximum power of two that is
-        # smaller than one 1/10th of the box size
+        # need to check this
         self.ngrid = Utilities.next_pow_two(int(self.box_size/10))
 
         print('Running contrast with the following parameters:\n')

@@ -1,15 +1,15 @@
-program CF_rmu
+program CCF_spi
   implicit none
   
   real*8 :: rgrid, boxsize, vol, rhomed
-  real*8 :: disx, disy, disz, dis, mu
+  real*8 :: disx, disy, disz, para, perp
   real*8 :: xvc, yvc, zvc
-  real*8 :: rwidth, dim1_max, dim1_min
-  real*8 :: muwidth, dim2_min, dim2_max
+  real*8 :: perpwidth, dim1_min, dim1_max
+  real*8 :: parawidth, dim2_min, dim2_max
   real*8 :: pi = 4.*atan(1.)
   
-  integer*8 :: ng, dim1_nbin, rind, dim2_nbin, muind
-  integer*8 :: i, j, ii, ix, iy, iz, ix2, iy2, iz2
+  integer*8 :: ng, dim1_nbin, perpind, dim2_nbin, paraind
+  integer*8 :: i, j, ii, jj, ix, iy, iz, ix2, iy2, iz2
   integer*8 :: indx, indy, indz, nrows, ncols
   integer*8 :: ipx, ipy, ipz, ndif
   integer*8 :: ngrid
@@ -20,15 +20,15 @@ program CF_rmu
   real*8, dimension(3) :: r, com
   real*8, allocatable, dimension(:,:)  :: tracers
   real*8, dimension(:, :), allocatable :: DD, delta
-  real*8, dimension(:), allocatable :: rbin, rbin_edges, mubin, mubin_edges
+  real*8, dimension(:), allocatable :: perpbin, perpbin_edges, parabin, parabin_edges
 
   logical :: has_velocity = .false.
   
   character(20), external :: str
   character(len=500) :: data_filename, output_filename
-  character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, dim2_nbin_char, ngrid_char, box_char
+  character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
   
-  if (iargc() .ne. 8) then
+  if (iargc() .ne. 7) then
       write(*,*) 'Some arguments are missing.'
       write(*,*) '1) data_filename'
       write(*,*) '2) output_filename'
@@ -36,8 +36,7 @@ program CF_rmu
       write(*,*) '4) dim1_min'
       write(*,*) '5) dim1_max'
       write(*,*) '6) dim1_nbin'
-      write(*,*) '7) dim2_nbin'
-      write(*,*) '8) ngrid'
+      write(*,*) '7) ngrid'
       write(*,*) ''
       stop
     end if
@@ -48,18 +47,16 @@ program CF_rmu
   call getarg(4, dim1_min_char)
   call getarg(5, dim1_max_char)
   call getarg(6, dim1_nbin_char)
-  call getarg(7, dim2_nbin_char)
-  call getarg(8, ngrid_char)
+  call getarg(7, ngrid_char)
   
   read(box_char, *) boxsize
   read(dim1_min_char, *) dim1_min
   read(dim1_max_char, *) dim1_max
   read(dim1_nbin_char, *) dim1_nbin
-  read(dim2_nbin_char, *) dim2_nbin
   read(ngrid_char, *) ngrid
   
   write(*,*) '-----------------------'
-  write(*,*) 'Running CF_rmu.exe'
+  write(*,*) 'Running CCF_spi.exe'
   write(*,*) 'input parameters:'
   write(*,*) ''
   write(*, *) 'data_filename: ', trim(data_filename)
@@ -85,31 +82,32 @@ program CF_rmu
   write(*,*) 'ntracers dim: ', size(tracers, dim=1), size(tracers, dim=2)
   write(*,*) 'pos(min), pos(max) = ', minval(tracers(1,:)), maxval(tracers(1,:))
 
-  allocate(rbin(dim1_nbin))
-  allocate(mubin(dim2_nbin))
-  allocate(rbin_edges(dim1_nbin + 1))
-  allocate(mubin_edges(dim2_nbin + 1))
+  dim2_nbin = dim1_nbin
+  allocate(perpbin(dim1_nbin))
+  allocate(parabin(dim2_nbin))
+  allocate(perpbin_edges(dim1_nbin + 1))
+  allocate(parabin_edges(dim2_nbin + 1))
   allocate(DD(dim1_nbin, dim2_nbin))
   allocate(delta(dim1_nbin, dim2_nbin))
   
   
-  rwidth = (dim1_max - dim1_min) / dim1_nbin
+  perpwidth = (dim1_max - dim1_min) / dim1_nbin
   do i = 1, dim1_nbin + 1
-    rbin_edges(i) = dim1_min+(i-1)*rwidth
+    perpbin_edges(i) = dim1_min+(i-1)*perpwidth
   end do
   do i = 1, dim1_nbin
-    rbin(i) = rbin_edges(i+1)-rwidth/2.
+    perpbin(i) = perpbin_edges(i+1)-perpwidth/2.
   end do
 
-  dim2_min = -1
-  dim2_max = 1
+  dim2_min = dim1_min
+  dim2_max = dim1_max
 
-  muwidth = (dim2_max - dim2_min) / dim2_nbin
+  parawidth = (dim2_max - dim2_min) / dim2_nbin
   do i = 1, dim2_nbin + 1
-    mubin_edges(i) = dim2_min+(i-1)*muwidth
+    parabin_edges(i) = dim2_min+(i-1)*parawidth
   end do
   do i = 1, dim2_nbin
-    mubin(i) = mubin_edges(i+1)-muwidth/2.
+    parabin(i) = parabin_edges(i+1)-parawidth/2.
   end do
   
   ! Mean density inside the box
@@ -152,7 +150,7 @@ program CF_rmu
   
   write(*,*) 'Linked list successfully constructed'
   write(*,*) ''
-  write(*,*) 'Starting loop over tracers...'
+  write(*,*) 'Starting loop over centres...'
   
   DD = 0
   delta = 0
@@ -200,13 +198,14 @@ program CF_rmu
   
               r = (/ disx, disy, disz /)
               com = (/ 0, 0, 1 /)
-              dis = norm2(r)
-              mu = dot_product(r, com) / (norm2(r) * norm2(com))
+              para = abs(dot_product(r, com))
+              perp = sqrt(norm2(r) ** 2 - para ** 2)
 
-              if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
-                rind = int((dis - dim1_min) / rwidth + 1)
-                muind = int((mu - dim2_min) / muwidth + 1)
-                DD(rind, muind) = DD(rind, muind) + 1
+              if (perp .gt. dim1_min .and. perp .lt. dim1_max .and. &
+                  para .gt. dim2_min .and. para .lt. dim2_max ) then
+                perpind = int((perp - dim1_min) / perpwidth + 1)
+                paraind = int((para - dim2_min) / parawidth + 1)
+                DD(perpind, paraind) = DD(perpind, paraind) + 1
               end if
 
   
@@ -219,10 +218,12 @@ program CF_rmu
     end do
   end do
 
-  do i = 1, dim1_nbin
-    do j = 1, dim2_nbin
-      vol = 4./3 * pi * (rbin_edges(i + 1) ** 3 - rbin_edges(i) ** 3) / (dim2_nbin)
-      delta(i, j) = DD(i, j) / (vol * rhomed * ng) - 1
+  do ii = 1, dim1_nbin
+    do jj = 1, dim2_nbin
+      vol = 2 * pi * (parabin_edges(jj + 1) - parabin_edges(jj))&
+                 * (perpbin_edges(ii + 1)**2 - perpbin_edges(ii)**2)
+                 
+      delta(ii, jj) = DD(ii, jj) / (vol * rhomed * ng) - 1
     end do
   end do
   
@@ -232,9 +233,9 @@ program CF_rmu
   open(12, file=output_filename, status='replace')
   do j = 1, dim2_nbin
     do i = 1, dim1_nbin
-      write(12, fmt='(3f15.5)') rbin(i), mubin(j), delta(i, j)
+      write(12, fmt='(3f15.5)') perpbin(i), parabin(j), delta(i, j)
     end do
   end do
 
-  end program CF_rmu
+  end program CCF_spi
   

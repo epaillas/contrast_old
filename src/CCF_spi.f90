@@ -1,15 +1,15 @@
-program density_profiles
+program CCF_spi
     implicit none
     
-    real*8 :: rgrid, boxsize, diff_vol, rhomed
+    real*8 :: rgrid, boxsize, vol, rhomed
     real*8 :: disx, disy, disz, para, perp
     real*8 :: xvc, yvc, zvc
-    real*8 :: perpwidth, perpmax, perpmin
-    real*8 :: parawidth, paramin, paramax
+    real*8 :: perpwidth, dim1_min, dim1_max
+    real*8 :: parawidth, dim2_min, dim2_max
     real*8 :: pi = 4.*atan(1.)
     
-    integer*8 :: ng, nc, nperpbin, perpind, nparabin, paraind
-    integer*8 :: i, ii, jj, ix, iy, iz, ix2, iy2, iz2
+    integer*8 :: ng, nc, dim1_nbin, perpind, dim2_nbin, paraind
+    integer*8 :: i, j, ii, jj, ix, iy, iz, ix2, iy2, iz2
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
@@ -19,42 +19,42 @@ program density_profiles
     
     real*8, dimension(3) :: r, com
     real*8, allocatable, dimension(:,:)  :: tracers, centres
-    real*8, dimension(:, :, :), allocatable :: DD, cum_DD, delta, cum_delta
+    real*8, dimension(:, :), allocatable :: DD, delta
     real*8, dimension(:), allocatable :: perpbin, perpbin_edges, parabin, parabin_edges
   
     logical :: has_velocity = .false.
     
     character(20), external :: str
-    character(len=500) :: input_tracers, input_centres, output_den
-    character(len=10) :: perpmax_char, perpmin_char, nperpbin_char, ngrid_char, box_char
+    character(len=500) :: input_tracers, centres_filename, output_filename
+    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
     
     if (iargc() .ne. 8) then
         write(*,*) 'Some arguments are missing.'
-        write(*,*) '1) input_data'
-        write(*,*) '2) input_centres'
-        write(*,*) '3) output_den'
+        write(*,*) '1) data_filename'
+        write(*,*) '2) centres_filename'
+        write(*,*) '3) output_filename'
         write(*,*) '4) boxsize'
-        write(*,*) '5) perpmin'
-        write(*,*) '6) perpmax'
-        write(*,*) '7) nperpbin'
+        write(*,*) '5) dim1_min'
+        write(*,*) '6) dim1_max'
+        write(*,*) '7) dim1_nbin'
         write(*,*) '8) ngrid'
         write(*,*) ''
         stop
       end if
       
     call getarg(1, input_tracers)
-    call getarg(2, input_centres)
-    call getarg(3, output_den)
+    call getarg(2, centres_filename)
+    call getarg(3, output_filename)
     call getarg(4, box_char)
-    call getarg(5, perpmin_char)
-    call getarg(6, perpmax_char)
-    call getarg(7, nperpbin_char)
+    call getarg(5, dim1_min_char)
+    call getarg(6, dim1_max_char)
+    call getarg(7, dim1_nbin_char)
     call getarg(8, ngrid_char)
     
     read(box_char, *) boxsize
-    read(perpmin_char, *) perpmin
-    read(perpmax_char, *) perpmax
-    read(nperpbin_char, *) nperpbin
+    read(dim1_min_char, *) dim1_min
+    read(dim1_max_char, *) dim1_max
+    read(dim1_nbin_char, *) dim1_nbin
     read(ngrid_char, *) ngrid
     
     write(*,*) '-----------------------'
@@ -62,12 +62,12 @@ program density_profiles
     write(*,*) 'input parameters:'
     write(*,*) ''
     write(*, *) 'input_tracers: ', trim(input_tracers)
-    write(*, *) 'input_centres: ', trim(input_centres)
+    write(*, *) 'centres_filename: ', trim(centres_filename)
     write(*, *) 'boxsize: ', trim(box_char)
-    write(*, *) 'output_den: ', trim(output_den)
-    write(*, *) 'perpmin: ', trim(perpmin_char), ' Mpc'
-    write(*, *) 'perpmax: ', trim(perpmax_char), ' Mpc'
-    write(*, *) 'nperpbin: ', trim(nperpbin_char)
+    write(*, *) 'output_filename: ', trim(output_filename)
+    write(*, *) 'dim1_min: ', trim(dim1_min_char), ' Mpc'
+    write(*, *) 'dim1_max: ', trim(dim1_max_char), ' Mpc'
+    write(*, *) 'dim1_nbin: ', trim(dim1_nbin_char)
     write(*, *) 'ngrid: ', trim(ngrid_char)
     write(*,*) ''
   
@@ -85,7 +85,7 @@ program density_profiles
     write(*,*) 'ntracers dim: ', size(tracers, dim=1), size(tracers, dim=2)
     write(*,*) 'pos(min), pos(max) = ', minval(tracers(1,:)), maxval(tracers(1,:))
   
-    open(11, file=input_centres, status='old', form='unformatted')
+    open(11, file=centres_filename, status='old', form='unformatted')
     read(11) nrows
     read(11) ncols
     allocate(centres(ncols, nrows))
@@ -94,33 +94,31 @@ program density_profiles
     nc = nrows
     write(*,*) 'ncentres dim: ', size(centres, dim=1), size(centres, dim=2)
   
-    nparabin = nperpbin
-    allocate(perpbin(nperpbin))
-    allocate(parabin(nparabin))
-    allocate(perpbin_edges(nperpbin + 1))
-    allocate(parabin_edges(nparabin + 1))
-    allocate(DD(nc, nperpbin, nparabin))
-    allocate(cum_DD(nc, nperpbin, nparabin))
-    allocate(delta(nc, nperpbin, nparabin))
-    allocate(cum_delta(nc, nperpbin, nparabin))
+    dim2_nbin = dim1_nbin
+    allocate(perpbin(dim1_nbin))
+    allocate(parabin(dim2_nbin))
+    allocate(perpbin_edges(dim1_nbin + 1))
+    allocate(parabin_edges(dim2_nbin + 1))
+    allocate(DD(dim1_nbin, dim2_nbin))
+    allocate(delta(dim1_nbin, dim2_nbin))
     
     
-    perpwidth = (perpmax - perpmin) / nperpbin
-    do i = 1, nperpbin + 1
-      perpbin_edges(i) = perpmin+(i-1)*perpwidth
+    perpwidth = (dim1_max - dim1_min) / dim1_nbin
+    do i = 1, dim1_nbin + 1
+      perpbin_edges(i) = dim1_min+(i-1)*perpwidth
     end do
-    do i = 1, nperpbin
+    do i = 1, dim1_nbin
       perpbin(i) = perpbin_edges(i+1)-perpwidth/2.
     end do
   
-    paramin = perpmin
-    paramax = perpmax
+    dim2_min = dim1_min
+    dim2_max = dim1_max
   
-    parawidth = (paramax - paramin) / nparabin
-    do i = 1, nparabin + 1
-      parabin_edges(i) = paramin+(i-1)*parawidth
+    parawidth = (dim2_max - dim2_min) / dim2_nbin
+    do i = 1, dim2_nbin + 1
+      parabin_edges(i) = dim2_min+(i-1)*parawidth
     end do
-    do i = 1, nparabin
+    do i = 1, dim2_nbin
       parabin(i) = parabin_edges(i+1)-parawidth/2.
     end do
     
@@ -167,9 +165,7 @@ program density_profiles
     write(*,*) 'Starting loop over centres...'
     
     DD = 0
-    cum_DD = 0
     delta = 0
-    cum_delta = 0
     
     do i = 1, nc
       xvc = centres(1, i)
@@ -180,7 +176,7 @@ program density_profiles
       ipy = int((yvc) / rgrid + 1.)
       ipz = int((zvc) / rgrid + 1.)
   
-      ndif = int(perpmax / rgrid + 1.)
+      ndif = int(dim1_max / rgrid + 1.)
     
       do ix = ipx - ndif, ipx + ndif
         do iy = ipy - ndif, ipy + ndif
@@ -217,11 +213,11 @@ program density_profiles
                 para = abs(dot_product(r, com))
                 perp = sqrt(norm2(r) ** 2 - para ** 2)
   
-                if (perp .gt. perpmin .and. perp .lt. perpmax .and. &
-                    para .gt. paramin .and. para .lt. paramax ) then
-                  perpind = int((perp - perpmin) / perpwidth + 1)
-                  paraind = int((para - paramin) / parawidth + 1)
-                  DD(i, perpind, paraind) = DD(i, perpind, paraind) + 1
+                if (perp .gt. dim1_min .and. perp .lt. dim1_max .and. &
+                    para .gt. dim2_min .and. para .lt. dim2_max ) then
+                  perpind = int((perp - dim1_min) / perpwidth + 1)
+                  paraind = int((para - dim2_min) / parawidth + 1)
+                  DD(perpind, paraind) = DD(perpind, paraind) + 1
                 end if
   
     
@@ -232,28 +228,26 @@ program density_profiles
           end do
         end do
       end do
-  
-      do ii = 1, nperpbin
-        do jj = 1, nparabin
-          diff_vol = 2 * pi * (parabin_edges(jj + 1) - parabin_edges(jj))&
-                     * (perpbin_edges(ii + 1)**2 - perpbin_edges(ii)**2)
-                     
-          delta(i, ii, jj) = DD(i, ii, jj) / (diff_vol * rhomed) - 1
-        end do
+    end do
+
+    do ii = 1, dim1_nbin
+      do jj = 1, dim2_nbin
+        vol = 2 * pi * (parabin_edges(jj + 1) - parabin_edges(jj))&
+                   * (perpbin_edges(ii + 1)**2 - perpbin_edges(ii)**2)
+                   
+        delta(ii, jj) = DD(ii, jj) / (vol * rhomed * nc) - 1
       end do
     end do
     
     write(*,*) ''
     write(*,*) 'Calculation finished. Writing output...'
     
-    open(12, file=output_den, status='replace', form='unformatted')
+    open(12, file=output_filename, status='replace')
+    do j = 1, dim2_nbin
+      do i = 1, dim1_nbin
+        write(12, fmt='(3f15.5)') perpbin(i), parabin(j), delta(i, j)
+      end do
+    end do
   
-    write(12) nc
-    write(12) size(perpbin)
-    write(12) size(parabin)
-    write(12) perpbin
-    write(12) parabin
-    write(12) delta
-  
-    end program density_profiles
+    end program CCF_spi
     

@@ -1,14 +1,14 @@
-program density_profiles
+program CCF_rmu
   implicit none
   
   real*8 :: rgrid, boxsize, vol, rhomed
   real*8 :: disx, disy, disz, dis, mu
   real*8 :: xvc, yvc, zvc
-  real*8 :: rwidth, dmax, dmin
+  real*8 :: rwidth, dim1_max, dim1_min
   real*8 :: muwidth, mumin, mumax
   real*8 :: pi = 4.*atan(1.)
   
-  integer*8 :: ng, nc, nrbin, rind, nmubin, muind
+  integer*8 :: ng, nc, dim1_nbin, rind, dim2_nbin, muind
   integer*8 :: i, j, ii, ix, iy, iz, ix2, iy2, iz2
   integer*8 :: indx, indy, indz, nrows, ncols
   integer*8 :: ipx, ipy, ipz, ndif
@@ -25,39 +25,39 @@ program density_profiles
   logical :: has_velocity = .false.
   
   character(20), external :: str
-  character(len=500) :: input_tracers, input_centres, output_den
-  character(len=10) :: dmax_char, dmin_char, nrbin_char, nmubin_char, ngrid_char, box_char
+  character(len=500) :: input_tracers, centres_filename, output_filename
+  character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, dim2_nbin_char, ngrid_char, box_char
   
   if (iargc() .ne. 9) then
       write(*,*) 'Some arguments are missing.'
-      write(*,*) '1) input_data'
-      write(*,*) '2) input_centres'
-      write(*,*) '3) output_den'
+      write(*,*) '1) data_filename'
+      write(*,*) '2) centres_filename'
+      write(*,*) '3) output_filename'
       write(*,*) '4) boxsize'
-      write(*,*) '5) dmin'
-      write(*,*) '6) dmax'
-      write(*,*) '7) nrbin'
-      write(*,*) '8) nmubin'
+      write(*,*) '5) dim1_min'
+      write(*,*) '6) dim1_max'
+      write(*,*) '7) dim1_nbin'
+      write(*,*) '8) dim2_nbin'
       write(*,*) '9) ngrid'
       write(*,*) ''
       stop
     end if
     
   call getarg(1, input_tracers)
-  call getarg(2, input_centres)
-  call getarg(3, output_den)
+  call getarg(2, centres_filename)
+  call getarg(3, output_filename)
   call getarg(4, box_char)
-  call getarg(5, dmin_char)
-  call getarg(6, dmax_char)
-  call getarg(7, nrbin_char)
-  call getarg(8, nmubin_char)
+  call getarg(5, dim1_min_char)
+  call getarg(6, dim1_max_char)
+  call getarg(7, dim1_nbin_char)
+  call getarg(8, dim2_nbin_char)
   call getarg(9, ngrid_char)
   
   read(box_char, *) boxsize
-  read(dmin_char, *) dmin
-  read(dmax_char, *) dmax
-  read(nrbin_char, *) nrbin
-  read(nmubin_char, *) nmubin
+  read(dim1_min_char, *) dim1_min
+  read(dim1_max_char, *) dim1_max
+  read(dim1_nbin_char, *) dim1_nbin
+  read(dim2_nbin_char, *) dim2_nbin
   read(ngrid_char, *) ngrid
   
   write(*,*) '-----------------------'
@@ -65,12 +65,12 @@ program density_profiles
   write(*,*) 'input parameters:'
   write(*,*) ''
   write(*, *) 'input_tracers: ', trim(input_tracers)
-  write(*, *) 'input_centres: ', trim(input_centres)
+  write(*, *) 'centres_filename: ', trim(centres_filename)
   write(*, *) 'boxsize: ', trim(box_char)
-  write(*, *) 'output_den: ', trim(output_den)
-  write(*, *) 'dmin: ', trim(dmin_char), ' Mpc'
-  write(*, *) 'dmax: ', trim(dmax_char), ' Mpc'
-  write(*, *) 'nrbin: ', trim(nrbin_char)
+  write(*, *) 'output_filename: ', trim(output_filename)
+  write(*, *) 'dim1_min: ', trim(dim1_min_char), ' Mpc'
+  write(*, *) 'dim1_max: ', trim(dim1_max_char), ' Mpc'
+  write(*, *) 'dim1_nbin: ', trim(dim1_nbin_char)
   write(*, *) 'ngrid: ', trim(ngrid_char)
   write(*,*) ''
 
@@ -88,7 +88,7 @@ program density_profiles
   write(*,*) 'ntracers dim: ', size(tracers, dim=1), size(tracers, dim=2)
   write(*,*) 'pos(min), pos(max) = ', minval(tracers(1,:)), maxval(tracers(1,:))
 
-  open(11, file=input_centres, status='old', form='unformatted')
+  open(11, file=centres_filename, status='old', form='unformatted')
   read(11) nrows
   read(11) ncols
   allocate(centres(ncols, nrows))
@@ -97,30 +97,30 @@ program density_profiles
   nc = nrows
   write(*,*) 'ncentres dim: ', size(centres, dim=1), size(centres, dim=2)
 
-  allocate(rbin(nrbin))
-  allocate(mubin(nmubin))
-  allocate(rbin_edges(nrbin + 1))
-  allocate(mubin_edges(nmubin + 1))
-  allocate(DD(nrbin, nmubin))
-  allocate(delta(nrbin, nmubin))
+  allocate(rbin(dim1_nbin))
+  allocate(mubin(dim2_nbin))
+  allocate(rbin_edges(dim1_nbin + 1))
+  allocate(mubin_edges(dim2_nbin + 1))
+  allocate(DD(dim1_nbin, dim2_nbin))
+  allocate(delta(dim1_nbin, dim2_nbin))
   
   
-  rwidth = (dmax - dmin) / nrbin
-  do i = 1, nrbin + 1
-    rbin_edges(i) = dmin+(i-1)*rwidth
+  rwidth = (dim1_max - dim1_min) / dim1_nbin
+  do i = 1, dim1_nbin + 1
+    rbin_edges(i) = dim1_min+(i-1)*rwidth
   end do
-  do i = 1, nrbin
+  do i = 1, dim1_nbin
     rbin(i) = rbin_edges(i+1)-rwidth/2.
   end do
 
   mumin = -1
   mumax = 1
 
-  muwidth = (mumax - mumin) / nmubin
-  do i = 1, nmubin + 1
+  muwidth = (mumax - mumin) / dim2_nbin
+  do i = 1, dim2_nbin + 1
     mubin_edges(i) = mumin+(i-1)*muwidth
   end do
-  do i = 1, nmubin
+  do i = 1, dim2_nbin
     mubin(i) = mubin_edges(i+1)-muwidth/2.
   end do
   
@@ -178,7 +178,7 @@ program density_profiles
     ipy = int((yvc) / rgrid + 1.)
     ipz = int((zvc) / rgrid + 1.)
 
-    ndif = int(dmax / rgrid + 1.)
+    ndif = int(dim1_max / rgrid + 1.)
   
     do ix = ipx - ndif, ipx + ndif
       do iy = ipy - ndif, ipy + ndif
@@ -215,8 +215,8 @@ program density_profiles
               dis = norm2(r)
               mu = dot_product(r, com) / (norm2(r) * norm2(com))
 
-              if (dis .gt. dmin .and. dis .lt. dmax) then
-                rind = int((dis - dmin) / rwidth + 1)
+              if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
+                rind = int((dis - dim1_min) / rwidth + 1)
                 muind = int((mu - mumin) / muwidth + 1)
                 DD(rind, muind) = DD(rind, muind) + 1
               end if
@@ -231,9 +231,9 @@ program density_profiles
     end do
   end do
 
-  do i = 1, nrbin
-    do j = 1, nmubin
-      vol = 4./3 * pi * (rbin_edges(i+1)**3 - rbin_edges(i)**3) / (nmubin)
+  do i = 1, dim1_nbin
+    do j = 1, dim2_nbin
+      vol = 4./3 * pi * (rbin_edges(i+1)**3 - rbin_edges(i)**3) / (dim2_nbin)
       delta(i, j) = DD(i, j) / (vol * rhomed * nc) - 1
     end do
   end do
@@ -241,12 +241,12 @@ program density_profiles
   write(*,*) ''
   write(*,*) 'Calculation finished. Writing output...'
   
-  open(12, file=output_den, status='replace')
-  do j = 1, nmubin
-    do i = 1, nrbin
+  open(12, file=output_filename, status='replace')
+  do j = 1, dim2_nbin
+    do i = 1, dim1_nbin
       write(12, fmt='(3f15.5)') rbin(i), mubin(j), delta(i, j)
     end do
   end do
 
-  end program density_profiles
+  end program CCF_rmu
   

@@ -6,7 +6,7 @@ MLIBS = -lm
 
 #################
 
-EXES = CF_monopole.exe CCF_monopole.exe CF_rmu.exe CCF_rmu.exe CCF_spi.exe
+EXES = CF_monopole.exe CCF_monopole.exe CF_rmu.exe CCF_rmu.exe CF_spi.exe CCF_spi.exe
 
 all: $(EXES)
 
@@ -21,6 +21,9 @@ CF_rmu.exe: CF_rmu.o
 
 CCF_rmu.exe: CCF_rmu.o
 	$(FC) CCF_rmu.o -o CCF_rmu.exe $(MLIBS)
+
+CF_spi.exe: CF_spi.o
+	$(FC) CF_spi.o -o CF_spi.exe $(MLIBS)
 
 CCF_spi.exe: CCF_spi.o
 	$(FC) CCF_spi.o -o CCF_spi.exe $(MLIBS)
@@ -37,6 +40,9 @@ CF_rmu.o: CF_rmu.f90
 
 CCF_rmu.o: CCF_rmu.f90
 	$(FC) -c CCF_rmu.f90
+
+CF_spi.o: CF_spi.f90
+	$(FC) -c CF_spi.f90
 
 CCF_spi.o: CCF_spi.f90
 	$(FC) -c CCF_spi.f90
