@@ -6,9 +6,9 @@ from python_tools.utilities import Utilities
 class Correlator:
 
     def __init__(self,
-                 handle,
                  data_filename,
                  data_filename_2,
+                 output_filename
                  box_size,
                  corr_type,
                  dim1_min,
@@ -19,7 +19,7 @@ class Correlator:
                  dim2_nbin):
 
         # declare attributes
-        self.handle = handle
+        self.output_filename = output_filename
         self.box_size = box_size
         self.corr_type = corr_type
 
@@ -42,10 +42,10 @@ class Correlator:
         self.dim2_nbin = dim2_nbin
 
         # need to check this
-        self.ngrid = Utilities.next_pow_two(int(self.box_size/10))
+        self.ngrid = int(self.box_size / 15)
 
         print('Running contrast with the following parameters:\n')
-        print('handle: {}'.format(self.handle))
+        print('output_filename: {}'.format(self.output_filename))
         print('ngrid: {}'.format(self.ngrid))
 
         # run the desired correlation function
@@ -58,8 +58,7 @@ class Correlator:
         Two point autocorrelation function
         in bins of r.
         '''
-        output_filename = self.handle + '.CF_monopole'
-        log_filename = self.handle + '.CF_monopole.log'
+        log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'CF_monopole.exe',
@@ -79,8 +78,7 @@ class Correlator:
         Two-point autocorrelation function
         in bins of r and mu.
         '''
-        output_filename = self.handle + '.CCF_rmu'
-        log_filename = self.handle + '.CCF_rmu.log'
+        log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'CCF_rmu.exe',
@@ -102,8 +100,7 @@ class Correlator:
         Two point cross-correlation function
         in bins of r.
         '''
-        output_filename = self.handle + '.CCF_monopole'
-        log_filename = self.handle + '.CCF_monopole.log'
+        log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'CCF_monopole.exe',
@@ -125,8 +122,7 @@ class Correlator:
         Two point cross-correlation function
         in bins of r and mu.
         '''
-        output_filename = self.handle + '.CCF_rmu'
-        log_filename = self.handle + '.CCF_rmu.log'
+        log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'CCF_rmu.exe',
@@ -149,8 +145,7 @@ class Correlator:
         in bins of s (perpendicular) and pi
         (parallel).
         '''
-        output_filename = self.handle + '.CCF_spi.unf'
-        log_filename = self.handle + '.CCF_spi.log'
+        log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'CCF_spi.exe',
