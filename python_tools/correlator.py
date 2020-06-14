@@ -81,7 +81,7 @@ class Correlator:
         log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CCF_rmu.exe',
+        cmd = [binpath + 'CF_rmu.exe',
                self.data_filename,
                output_filename,
                str(self.box_size),
