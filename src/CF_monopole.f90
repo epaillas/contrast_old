@@ -205,9 +205,9 @@ program CF_monopole
               dis = norm2(r)
 
               if (has_velocity) then
-                velx = tracers(4, ii)
-                vely = tracers(5, ii)
-                velz = tracers(6, ii)
+                velx = tracers(4, ii) - tracers(4, i)
+                vely = tracers(5, ii) - tracers(5, i)
+                velz = tracers(6, ii) - tracers(6, i)
                 vel = (/ velx, vely, velz /)
                 com = (/ 0, 0, 1 /)
                 vr = dot_product(vel, r) / norm2(r)
