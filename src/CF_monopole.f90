@@ -190,9 +190,9 @@ program CF_monopole
           if(ii.ne.0) then
             do
               ii = ll(ii)
-              disx = tracers(1, ii) - xvc
-              disy = tracers(2, ii) - yvc
-              disz = tracers(3, ii) - zvc
+              disx = tracers(1, ii) - tracers(1, i)
+              disy = tracers(2, ii) - tracers(2, i)
+              disz = tracers(3, ii) - tracers(3, i)
 
               if (disx .lt. -boxsize/2) disx = disx + boxsize
               if (disx .gt. boxsize/2) disx = disx - boxsize
