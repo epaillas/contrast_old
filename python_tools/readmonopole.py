@@ -38,9 +38,26 @@ fout = handle + ext_out
 cout = np.c_[r_for_v, v_r]
 np.savetxt(fout, cout, fmt=fmt)
 
+# sv_r
+r_for_v = data[:,0]
+sv_r = data[:,4]
+ext_out = 'sv_r'
+fout = handle + ext_out
+cout = np.c_[r_for_v, sv_r]
+np.savetxt(fout, cout, fmt=fmt)
+
+# v_los
+r_for_v = data[:,0]
+v_los = data[:,5]
+ext_out = 'v_los'
+fout = handle + ext_out
+cout = np.c_[r_for_v, v_los]
+np.savetxt(fout, cout, fmt=fmt)
+
+
 # sv_los
 r_for_v = data[:,0]
-sv_los = data[:,4]
+sv_los = data[:,6]
 ext_out = 'sv_los'
 fout = handle + ext_out
 cout = np.c_[r_for_v, sv_los]
