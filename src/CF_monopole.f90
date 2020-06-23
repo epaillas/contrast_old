@@ -20,7 +20,8 @@ program CF_monopole
   real*8, dimension(3) :: r, vel, com
   real*8, allocatable, dimension(:,:)  :: tracers
   real*8, dimension(:), allocatable :: DD, int_DD, delta, int_delta
-  real*8, dimension(:), allocatable :: VV_r, VV_los, VV2_los, mean_vr, std_vlos
+  real*8, dimension(:), allocatable :: VV_r, VV2_r, mean_vr, std_vr
+  real*8, dimension(:), allocatable :: VV_los, VV2_los, mean_vlos, std_vlos
   real*8, dimension(:), allocatable :: rbin, rbin_edges
 
   logical :: has_velocity = .false.
@@ -92,8 +93,11 @@ program CF_monopole
   if (has_velocity) then
     allocate(VV_r(dim1_nbin))
     allocate(VV_los(dim1_nbin))
+    allocate(VV2_r(dim1_nbin))
     allocate(VV2_los(dim1_nbin))
     allocate(mean_vr(dim1_nbin))
+    allocate(mean_vlos(dim1_nbin))
+    allocate(std_vr(dim1_nbin))
     allocate(std_vlos(dim1_nbin))
   end if
   
@@ -155,8 +159,11 @@ program CF_monopole
   if (has_velocity) then
     VV_r = 0
     VV_los = 0
+    VV2_r = 0
     VV2_los = 0
     mean_vr = 0
+    std_vr = 0
+    mean_vlos = 0
     std_vlos = 0
   end if
   
@@ -221,6 +228,7 @@ program CF_monopole
                 if (has_velocity) then
                   VV_r(rind) = VV_r(rind) + vr
                   VV_los(rind) = VV_los(rind) + vlos
+                  VV2_r(rind) = VV2_r(rind) + vr**2
                   VV2_los(rind) = VV2_los(rind) + vlos**2
                 end if
               end if
@@ -247,6 +255,8 @@ program CF_monopole
 
     if (has_velocity) then
       mean_vr(i) = VV_r(i) / DD(i)
+      mean_vlos(i) = VV_los(i) / DD(i)
+      std_vr(i) = sqrt((VV2_r(i) - (VV_r(i) ** 2 / DD(i))) / (DD(i) - 1))
       std_vlos(i) = sqrt((VV2_los(i) - (VV_los(i) ** 2 / DD(i))) / (DD(i) - 1))
     end if
 
@@ -258,7 +268,7 @@ program CF_monopole
   open(12, file=output_filename, status='replace')
   do i = 1, dim1_nbin
     if (has_velocity) then
-      write(12, fmt='(5f15.5)') rbin(i), delta(i), int_delta(i), mean_vr(i), std_vlos(i)
+      write(12, fmt='(7f15.5)') rbin(i), delta(i), int_delta(i), mean_vr(i), std_vr(i), mean_vlos(i), std_vlos(i)
     else
       write(12, fmt='(3f15.5)') rbin(i), delta(i), int_delta(i)
     end if
