@@ -227,7 +227,7 @@ program CF_monopole
                 vel = (/ velx, vely, velz /)
                 com = (/ 0, 0, 1 /)
                 vr = dot_product(vel, r) / norm2(r)
-                vt = dot_product(vel, r - vel) / norm2(r - vel)
+                vt = norm2(vel - vr * r / norm2(r))
                 vlos = dot_product(vel, com)
               end if
 
