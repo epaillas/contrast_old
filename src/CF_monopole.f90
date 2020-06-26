@@ -267,7 +267,7 @@ program CF_monopole
 
     if (has_velocity) then
       mean_vr(i) = VV_r(i) / DD(i)
-      mean_vt(i) = VV_r(i) / DD(i)
+      mean_vt(i) = VV_t(i) / DD(i)
       mean_vlos(i) = VV_los(i) / DD(i)
       std_vr(i) = sqrt((VV2_r(i) - (VV_r(i) ** 2 / DD(i))) / (DD(i) - 1))
       std_vt(i) = sqrt((VV2_t(i) - (VV_t(i) ** 2 / DD(i))) / (DD(i) - 1))
