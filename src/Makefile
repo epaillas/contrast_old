@@ -6,12 +6,16 @@ MLIBS = -lm
 
 #################
 
-EXES = CF_monopole.exe CCF_monopole.exe CF_rmu.exe CCF_rmu.exe CF_spi.exe CCF_spi.exe
+EXES = CF_monopole.exe CF_los_velocity_vs_rmu.exe CCF_monopole.exe \
+       CF_rmu.exe CCF_rmu.exe CF_spi.exe CCF_spi.exe
 
 all: $(EXES)
 
 CF_monopole.exe: CF_monopole.o
 	$(FC) CF_monopole.o -o CF_monopole.exe $(MLIBS)
+
+CF_los_velocity_vs_rmu.exe: CF_los_velocity_vs_rmu.o
+	$(FC) CF_los_velocity_vs_rmu.o -o CF_los_velocity_vs_rmu.exe $(MLIBS)
 
 CCF_monopole.exe: CCF_monopole.o
 	$(FC) CCF_monopole.o -o CCF_monopole.exe $(MLIBS)
@@ -31,6 +35,9 @@ CCF_spi.exe: CCF_spi.o
 
 CF_monopole.o: CF_monopole.f90
 	$(FC) -c CF_monopole.f90
+
+CF_los_velocity_vs_rmu.o: CF_los_velocity_vs_rmu.f90
+	$(FC) -c CF_los_velocity_vs_rmu.f90
 
 CCF_monopole.o: CCF_monopole.f90
 	$(FC) -c CCF_monopole.f90
