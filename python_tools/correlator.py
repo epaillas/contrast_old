@@ -94,6 +94,27 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
+    def CF_los_velocity_vs_rmu(self):
+        '''
+        Line-of-sight pairwise velocity (mean and dispersion)
+        as a function of r and mu.
+        '''
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'CF_los_velocity_vs_rmu.exe',
+               self.data_filename,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.dim2_nbin),
+               str(self.ngrid)]
+        
+        log = open(log_filename, 'w+')
+        subprocess.call(cmd, stdout=log, stderr=log)
+
 
     def CCF_monopole(self):
         '''

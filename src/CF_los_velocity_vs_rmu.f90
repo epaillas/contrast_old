@@ -1,4 +1,4 @@
-program CF_rmu
+program CF_los_velocity_vs_rmu
     implicit none
     
     real*8 :: rgrid, boxsize
@@ -57,7 +57,7 @@ program CF_rmu
     read(ngrid_char, *) ngrid
     
     write(*,*) '-----------------------'
-    write(*,*) 'Running CF_rmu.exe'
+    write(*,*) 'Running CF_los_velocity_vs_rmu.exe'
     write(*,*) 'input parameters:'
     write(*,*) ''
     write(*, *) 'data_filename: ', trim(data_filename)
@@ -243,5 +243,5 @@ program CF_rmu
       end do
     end do
   
-    end program CF_rmu
+    end program CF_los_velocity_vs_rmu
     
