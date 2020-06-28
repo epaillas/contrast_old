@@ -1,15 +1,14 @@
-program CF_los_velocity_vs_rmu
+program CF_xi_vs_r
     implicit none
     
-    real*8 :: rgrid, boxsize
-    real*8 :: disx, disy, disz, dis, mu, vlos
+    real*8 :: rgrid, boxsize, vol, rhomed
+    real*8 :: disx, disy, disz, dis
     real*8 :: xvc, yvc, zvc
-    real*8 :: velx, vely, velz
     real*8 :: rwidth, dim1_max, dim1_min
-    real*8 :: muwidth, dim2_min, dim2_max
+    real*8 :: pi = 4.*atan(1.)
     
-    integer*8 :: ng, dim1_nbin, rind, dim2_nbin, muind
-    integer*8 :: i, j, ii, ix, iy, iz, ix2, iy2, iz2
+    integer*8 :: ng, dim1_nbin, rind
+    integer*8 :: i, ii, ix, iy, iz, ix2, iy2, iz2
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
@@ -17,16 +16,18 @@ program CF_los_velocity_vs_rmu
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
     
-    real*8, dimension(3) :: r, v, com
+    real*8, dimension(3) :: r
     real*8, allocatable, dimension(:,:)  :: tracers
-    real*8, dimension(:, :), allocatable :: DD, VV, VV2, mean_vlos, std_vlos
-    real*8, dimension(:), allocatable :: rbin, rbin_edges, mubin, mubin_edges
+    real*8, dimension(:), allocatable :: DD, delta
+    real*8, dimension(:), allocatable :: rbin, rbin_edges
   
+    logical :: has_velocity = .false.
+    
     character(20), external :: str
     character(len=500) :: data_filename, output_filename
-    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, dim2_nbin_char, ngrid_char, box_char
+    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
     
-    if (iargc() .ne. 8) then
+    if (iargc() .ne. 7) then
         write(*,*) 'Some arguments are missing.'
         write(*,*) '1) data_filename'
         write(*,*) '2) output_filename'
@@ -34,8 +35,7 @@ program CF_los_velocity_vs_rmu
         write(*,*) '4) dim1_min'
         write(*,*) '5) dim1_max'
         write(*,*) '6) dim1_nbin'
-        write(*,*) '7) dim2_nbin'
-        write(*,*) '8) ngrid'
+        write(*,*) '7) ngrid'
         write(*,*) ''
         stop
       end if
@@ -46,18 +46,16 @@ program CF_los_velocity_vs_rmu
     call getarg(4, dim1_min_char)
     call getarg(5, dim1_max_char)
     call getarg(6, dim1_nbin_char)
-    call getarg(7, dim2_nbin_char)
-    call getarg(8, ngrid_char)
+    call getarg(7, ngrid_char)
     
     read(box_char, *) boxsize
     read(dim1_min_char, *) dim1_min
     read(dim1_max_char, *) dim1_max
     read(dim1_nbin_char, *) dim1_nbin
-    read(dim2_nbin_char, *) dim2_nbin
     read(ngrid_char, *) ngrid
     
     write(*,*) '-----------------------'
-    write(*,*) 'Running CF_los_velocity_vs_rmu.exe'
+    write(*,*) 'Running CF_xi_vs_r.exe'
     write(*,*) 'input parameters:'
     write(*,*) ''
     write(*, *) 'data_filename: ', trim(data_filename)
@@ -77,23 +75,16 @@ program CF_los_velocity_vs_rmu
     close(10)
     ng = nrows
     if (ncols .eq. 6) then
+      has_velocity = .true.
       write(*,*) 'Tracer file has velocity information.'
-    else
-      write(*,*) 'Tracer file is missing velocity information.'
-      stop
     end if
     write(*,*) 'ntracers dim: ', size(tracers, dim=1), size(tracers, dim=2)
     write(*,*) 'pos(min), pos(max) = ', minval(tracers(1,:)), maxval(tracers(1,:))
   
     allocate(rbin(dim1_nbin))
-    allocate(mubin(dim2_nbin))
     allocate(rbin_edges(dim1_nbin + 1))
-    allocate(mubin_edges(dim2_nbin + 1))
-    allocate(DD(dim1_nbin, dim2_nbin))
-    allocate(VV(dim1_nbin, dim2_nbin))
-    allocate(VV2(dim1_nbin, dim2_nbin))
-    allocate(mean_vlos(dim1_nbin, dim2_nbin))
-    allocate(std_vlos(dim1_nbin, dim2_nbin))
+    allocate(DD(dim1_nbin))
+    allocate(delta(dim1_nbin))
     
     rwidth = (dim1_max - dim1_min) / dim1_nbin
     do i = 1, dim1_nbin + 1
@@ -102,17 +93,9 @@ program CF_los_velocity_vs_rmu
     do i = 1, dim1_nbin
       rbin(i) = rbin_edges(i+1)-rwidth/2.
     end do
-  
-    dim2_min = -1
-    dim2_max = 1
-  
-    muwidth = (dim2_max - dim2_min) / dim2_nbin
-    do i = 1, dim2_nbin + 1
-      mubin_edges(i) = dim2_min+(i-1)*muwidth
-    end do
-    do i = 1, dim2_nbin
-      mubin(i) = mubin_edges(i+1)-muwidth/2.
-    end do
+    
+    ! Mean density inside the box
+    rhomed = ng / (boxsize ** 3)
     
     ! Construct linked list for tracers
     write(*,*) ''
@@ -154,8 +137,7 @@ program CF_los_velocity_vs_rmu
     write(*,*) 'Starting loop over tracers...'
     
     DD = 0
-    VV = 0
-    VV2 = 0
+    delta = 0
     
     do i = 1, ng
       xvc = tracers(1, i)
@@ -200,23 +182,11 @@ program CF_los_velocity_vs_rmu
     
                 r = (/ disx, disy, disz /)
                 dis = norm2(r)
-                com = (/ 0, 0, 1 /)
-                mu = dot_product(r, com) / (norm2(r) * norm2(com))
-
-                velx = tracers(4, ii) - tracers(4, i)
-                vely = tracers(5, ii) - tracers(5, i)
-                velz = tracers(6, ii) - tracers(6, i)
-                v = (/ velx, vely, velz /)
-                vlos = dot_product(v, com)
   
                 if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
                   rind = int((dis - dim1_min) / rwidth + 1)
-                  muind = int((mu - dim2_min) / muwidth + 1)
-                  DD(rind, muind) = DD(rind, muind) + 1
-                  VV(rind, muind) = VV(rind, muind) + vlos
-                  VV2(rind, muind) = VV2(rind, muind) + vlos**2
+                  DD(rind) = DD(rind) + 1
                 end if
-  
     
                 if(ii.eq.lirst(ix2,iy2,iz2)) exit
     
@@ -228,22 +198,17 @@ program CF_los_velocity_vs_rmu
     end do
   
     do i = 1, dim1_nbin
-      do j = 1, dim2_nbin
-
-        mean_vlos(i, j) = VV(i, j) / DD(i, j)
-        std_vlos(i, j) = sqrt((VV2(i,j) - (VV(i,j) ** 2 / DD(i,j))) / (DD(i,j) - 1))
-      end do
+      vol = 4./3 * pi * (rbin_edges(i + 1) ** 3 - rbin_edges(i) ** 3)
+      delta(i) = DD(i) / (vol * rhomed * ng) - 1
     end do
     
     write(*,*) ''
     write(*,*) 'Calculation finished. Writing output...'
     
     open(12, file=output_filename, status='replace')
-    do j = 1, dim2_nbin
-      do i = 1, dim1_nbin
-        write(12, fmt='(3f15.5)') rbin(i), mubin(j), mean_vlos(i, j), std_vlos(i,j)
-      end do
+    do i = 1, dim1_nbin
+      write(12, fmt='(3f15.5)') rbin(i), delta(i)
     end do
   
-    end program CF_los_velocity_vs_rmu
+    end program CF_xi_vs_r
     

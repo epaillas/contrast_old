@@ -6,13 +6,15 @@ MLIBS = -lm
 
 #################
 
-EXES = CF_monopole.exe CF_los_velocity_vs_rmu.exe CCF_monopole.exe \
-       CF_rmu.exe CCF_rmu.exe CF_spi.exe CCF_spi.exe
+EXES = CF_monopole.exe CF_xi_vs_r.exe CF_los_velocity_vs_rmu.exe CCF_monopole.exe CF_xi_vs_rmu.exe CCF_xi_vs_rmu.exe CF_spi.exe CCF_spi.exe
 
 all: $(EXES)
 
 CF_monopole.exe: CF_monopole.o
 	$(FC) CF_monopole.o -o CF_monopole.exe $(MLIBS)
+
+CF_xi_vs_r.exe: CF_xi_vs_r.o
+	$(FC) CF_xi_vs_r.o -o CF_xi_vs_r.exe $(MLIBS)
 
 CF_los_velocity_vs_rmu.exe: CF_los_velocity_vs_rmu.o
 	$(FC) CF_los_velocity_vs_rmu.o -o CF_los_velocity_vs_rmu.exe $(MLIBS)
@@ -20,11 +22,11 @@ CF_los_velocity_vs_rmu.exe: CF_los_velocity_vs_rmu.o
 CCF_monopole.exe: CCF_monopole.o
 	$(FC) CCF_monopole.o -o CCF_monopole.exe $(MLIBS)
 
-CF_rmu.exe: CF_rmu.o
-	$(FC) CF_rmu.o -o CF_rmu.exe $(MLIBS)
+CF_xi_vs_rmu.exe: CF_xi_vs_rmu.o
+	$(FC) CF_xi_vs_rmu.o -o CF_xi_vs_rmu.exe $(MLIBS)
 
-CCF_rmu.exe: CCF_rmu.o
-	$(FC) CCF_rmu.o -o CCF_rmu.exe $(MLIBS)
+CCF_xi_vs_rmu.exe: CCF_xi_vs_rmu.o
+	$(FC) CCF_xi_vs_rmu.o -o CCF_xi_vs_rmu.exe $(MLIBS)
 
 CF_spi.exe: CF_spi.o
 	$(FC) CF_spi.o -o CF_spi.exe $(MLIBS)
@@ -36,17 +38,20 @@ CCF_spi.exe: CCF_spi.o
 CF_monopole.o: CF_monopole.f90
 	$(FC) -c CF_monopole.f90
 
+CF_xi_vs_r.o: CF_xi_vs_r.f90
+	$(FC) -c CF_xi_vs_r.f90
+
 CF_los_velocity_vs_rmu.o: CF_los_velocity_vs_rmu.f90
 	$(FC) -c CF_los_velocity_vs_rmu.f90
 
 CCF_monopole.o: CCF_monopole.f90
 	$(FC) -c CCF_monopole.f90
 
-CF_rmu.o: CF_rmu.f90
-	$(FC) -c CF_rmu.f90
+CF_xi_vs_rmu.o: CF_xi_vs_rmu.f90
+	$(FC) -c CF_xi_vs_rmu.f90
 
-CCF_rmu.o: CCF_rmu.f90
-	$(FC) -c CCF_rmu.f90
+CCF_xi_vs_rmu.o: CCF_xi_vs_rmu.f90
+	$(FC) -c CCF_xi_vs_rmu.f90
 
 CF_spi.o: CF_spi.f90
 	$(FC) -c CF_spi.f90
