@@ -28,11 +28,8 @@ class Correlator:
         else:
             sys.exit('{} not found.'.format(data_filename))
 
-        if 'CCF' in self.corr_type:
-            if os.path.isfile(data_filename_2):
-                self.data_filename_2 = data_filename_2
-            else:
-                sys.exit('{} not found.'.format(data_filename_2))
+        if data_filename_2 is None:
+            self.data_filename_2 = self.data_filename
         
         self.dim1_min = dim1_min
         self.dim2_min = dim2_min
@@ -45,7 +42,18 @@ class Correlator:
         self.ngrid = int(self.box_size / 15)
 
         print('Running contrast with the following parameters:\n')
+        print('corr_type: {}'.format(self.corr_type))
+        print('box_size: {}'.format(self.box_size))
+        print('data_filename: {}'.format(self.data_filename))
+        if self.data_filename_2 != self.data_filename:
+            print('data_filename_2: {}'.format(self.data_filename_2))
         print('output_filename: {}'.format(self.output_filename))
+        print('dim1_min: {}'.format(self.dim1_min))
+        print('dim1_max: {}'.format(self.dim1_max))
+        print('dim2_min: {}'.format(self.dim2_min))
+        print('dim2_max: {}'.format(self.dim2_max))
+        print('dim1_nbin: {}'.format(self.dim1_nbin))
+        print('dim2_nbin: {}'.format(self.dim2_nbin))
         print('ngrid: {}'.format(self.ngrid))
 
         # run the desired correlation function
@@ -53,7 +61,7 @@ class Correlator:
 
 
 
-    def CF_monopole(self):
+    def tpcf(self):
         '''
         Two point autocorrelation function
         in bins of r.
@@ -61,8 +69,9 @@ class Correlator:
         log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CF_monopole.exe',
+        cmd = [binpath + 'tpcf.exe',
                self.data_filename,
+               self.data_filename_2,
                self.output_filename,
                str(self.box_size),
                str(self.dim1_min),
@@ -73,7 +82,7 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
-    def CF_rmu(self):
+    def s_mu_tpcf(self):
         '''
         Two-point autocorrelation function
         in bins of r and mu.
@@ -81,72 +90,7 @@ class Correlator:
         log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CF_rmu.exe',
-               self.data_filename,
-               self.output_filename,
-               str(self.box_size),
-               str(self.dim1_min),
-               str(self.dim1_max),
-               str(self.dim1_nbin),
-               str(self.dim2_nbin),
-               str(self.ngrid)]
-        
-        log = open(log_filename, 'w+')
-        subprocess.call(cmd, stdout=log, stderr=log)
-
-    def CF_los_velocity_vs_rmu(self):
-        '''
-        Line-of-sight pairwise velocity (mean and dispersion)
-        as a function of r and mu.
-        '''
-        log_filename = self.output_filename + '.log'
-
-        binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CF_los_velocity_vs_rmu.exe',
-               self.data_filename,
-               self.output_filename,
-               str(self.box_size),
-               str(self.dim1_min),
-               str(self.dim1_max),
-               str(self.dim1_nbin),
-               str(self.dim2_nbin),
-               str(self.ngrid)]
-        
-        log = open(log_filename, 'w+')
-        subprocess.call(cmd, stdout=log, stderr=log)
-
-
-    def CCF_monopole(self):
-        '''
-        Two point cross-correlation function
-        in bins of r.
-        '''
-        log_filename = self.output_filename + '.log'
-
-        binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CCF_monopole.exe',
-               self.data_filename,
-               self.data_filename_2,
-               self.output_filename,
-               str(self.box_size),
-               str(self.dim1_min),
-               str(self.dim1_max),
-               str(self.dim1_nbin),
-               str(self.ngrid)]
-        
-        log = open(log_filename, 'w+')
-        subprocess.call(cmd, stdout=log, stderr=log)
-
-
-    def CCF_rmu(self):
-        '''
-        Two point cross-correlation function
-        in bins of r and mu.
-        '''
-        log_filename = self.output_filename + '.log'
-
-        binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CCF_rmu.exe',
+        cmd = [binpath + 's_mu_tpcf.exe',
                self.data_filename,
                self.data_filename_2,
                self.output_filename,
@@ -160,7 +104,7 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
-    def CCF_spi(self):
+    def s_pi_tpcf(self):
         '''
         Two point cross-correlation function
         in bins of s (perpendicular) and pi
@@ -169,7 +113,7 @@ class Correlator:
         log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'CCF_spi.exe',
+        cmd = [binpath + 's_pi_tpcf.exe',
                self.data_filename,
                self.data_filename_2,
                self.output_filename,
@@ -182,12 +126,46 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
-def next_pow_two(n):
-    '''
-    Returns the largest power of two
-    smaller than a given positive integer.
-    '''
-    i = 1
-    while i < n:
-        i = i << 1
-    return i
+    def mean_radial_velocity_vs_rmu(self):
+        '''
+        Line-of-sight pairwise velocity (mean and dispersion)
+        as a function of r and mu.
+        '''
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'std_los_velocity_vs_rmu.exe',
+               self.data_filename,
+               self.data_filename_2,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.dim2_nbin),
+               str(self.ngrid)]
+        
+        log = open(log_filename, 'w+')
+        subprocess.call(cmd, stdout=log, stderr=log)
+
+    def std_los_velocity_vs_rmu(self):
+        '''
+        Line-of-sight pairwise velocity (mean and dispersion)
+        as a function of r and mu.
+        '''
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'std_los_velocity_vs_rmu.exe',
+               self.data_filename,
+               self.data_filename_2,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.dim2_nbin),
+               str(self.ngrid)]
+        
+        log = open(log_filename, 'w+')
+        subprocess.call(cmd, stdout=log, stderr=log)
