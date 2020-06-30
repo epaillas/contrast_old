@@ -30,6 +30,8 @@ class Correlator:
 
         if data_filename_2 is None:
             self.data_filename_2 = self.data_filename
+        else:
+            self.data_filename_2 = data_filename_2
         
         self.dim1_min = dim1_min
         self.dim2_min = dim2_min
