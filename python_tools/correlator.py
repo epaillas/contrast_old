@@ -128,7 +128,7 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
-    def mean_radial_velocity_vs_rmu(self):
+    def mean_radial_velocity_vs_r(self):
         '''
         Line-of-sight pairwise velocity (mean and dispersion)
         as a function of r and mu.
@@ -136,7 +136,7 @@ class Correlator:
         log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'std_los_velocity_vs_rmu.exe',
+        cmd = [binpath + 'std_los_velocity_vs_r.exe',
                self.data_filename,
                self.data_filename_2,
                self.output_filename,
