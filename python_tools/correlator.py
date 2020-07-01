@@ -144,7 +144,6 @@ class Correlator:
                str(self.dim1_min),
                str(self.dim1_max),
                str(self.dim1_nbin),
-               str(self.dim2_nbin),
                str(self.ngrid)]
         
         log = open(log_filename, 'w+')
