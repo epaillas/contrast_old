@@ -59,6 +59,8 @@ def CrossCovarianceMatrix(data1, data2, norm=False):
         return cov
 
 def MultipoleCovariance(handle_mocks, smin, smax, multipoles):
+        smin = float(smin)
+        smax = float(smax)
         files_mocks = sorted(glob.glob(handle_mocks))
         mock_datavec = []
         nmocks = len(files_mocks)
@@ -101,8 +103,8 @@ def MultipoleCovariance(handle_mocks, smin, smax, multipoles):
 
 def JointMultipoleCovariance(handle_mocks, smins, smaxs, multipoles):
         handle_mocks = handle_mocks.split(',')
-        smins = [int(i) for i in smins.split(',')]
-        smaxs = [int(i) for i in smaxs.split(',')]
+        smins = [float(i) for i in smins.split(',')]
+        smaxs = [float(i) for i in smaxs.split(',')]
         ndenbins = len(handle_mocks)
 
         files_mocks = {}
@@ -161,8 +163,8 @@ def JointMultipoleCovariance(handle_mocks, smins, smaxs, multipoles):
 @click.command()
 @click.option('--handle_in', type=str, required=True, help='Handle from mocks')
 @click.option('--handle_out', type=str, required=True, help='Handle for the mean')
-@click.option('--smin', type=float, default=0.0, help='Minimum scale to fit (in Mpc/h)')
-@click.option('--smax', type=float, default=100.0, help='Maximum scale to fit (in Mpc/h)')
+@click.option('--smin', type=str, default=0.0, help='Minimum scale to fit (in Mpc/h)')
+@click.option('--smax', type=str, default=100.0, help='Maximum scale to fit (in Mpc/h)')
 @click.option('--multipoles', type=str, default='0+2', help='Which multipoles to fit?')
 
 def get_covariance(handle_in,
