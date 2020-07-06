@@ -95,6 +95,8 @@ def MultipoleCovariance(handle_mocks, smin, smax, multipoles):
 
         mock_datavec = np.asarray(mock_datavec)
         cov = CovarianceMatrix(mock_datavec)
+        print('np.shape(cov): {}'.format(np.shape(cov)))
+
         return cov
 
 def JointMultipoleCovariance(handle_mocks, smins, smaxs, multipoles):
@@ -173,11 +175,13 @@ def get_covariance(handle_in,
     ndenbins = len(handle_in.split(','))
 
     if ndenbins > 1:
+        print('Calculating covariance for joint fit with {} bins.'.format(ndenbins))
         cov = JointMultipoleCovariance(handle_mocks=handle_in,
                                 smins=smin,
                                 smaxs=smax,
                                 multipoles=multipoles)
     elif ndenbins == 1:
+        print('Calculating covariance for single fit.')
         cov = MultipoleCovariance(handle_mocks=handle_in,
                               smin=smin,
                               smax=smax,
