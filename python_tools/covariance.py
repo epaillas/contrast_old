@@ -177,7 +177,7 @@ def get_covariance(handle_in,
     ndenbins = len(handle_in.split(','))
 
     if ndenbins > 1:
-        print('Calculating covariance for joint fit.)
+        print('Calculating covariance for joint fit.')
         cov = JointMultipoleCovariance(handle_mocks=handle_in,
                                 smins=smin,
                                 smaxs=smax,
