@@ -140,15 +140,15 @@ def JointMultipoleCovariance(handle_mocks, smins, smaxs, multipoles):
                 xi4 = xi4[fitscale]
 
                 if multipoles == '0+2':
-                    datavec = np.concatenate((xi0, xi2))
+                    datavec = np.concatenate((datavec, xi0, xi2))
                 elif multipoles == '0+2+4':
-                    datavec = np.concatenate((xi0, xi2, xi4))
+                    datavec = np.concatenate((datavec, xi0, xi2, xi4))
                 elif multipoles == '0':
-                    datavec = xi0
+                    datavec = np.concatenate((datavec, xi0))
                 elif multipoles == '2':
-                    datavec = xi2
+                    datavec = np.concatenate((datavec, xi2))
                 elif multipoles == '4':
-                    datavec = xi4
+                    datavec = np.concatenate((datavec, xi4))
                 else:
                     sys.exit('Fit type not recognized.')
 
@@ -177,7 +177,7 @@ def get_covariance(handle_in,
     ndenbins = len(handle_in.split(','))
 
     if ndenbins > 1:
-        print('Calculating covariance for joint fit with {} bins.'.format(ndenbins))
+        print('Calculating covariance for joint fit.)
         cov = JointMultipoleCovariance(handle_mocks=handle_in,
                                 smins=smin,
                                 smaxs=smax,
