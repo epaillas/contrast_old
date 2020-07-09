@@ -24,8 +24,8 @@ def mean_from_mocks(handle_in,
         data_list.append(data)
 
     data_list = np.asarray(data_list)
-    data_mean = np.mean(data_list, axis=0)
-    data_std = np.std(data_list, axis=0)[:,-1]
+    data_mean = np.nanmean(data_list, axis=0)
+    data_std = np.nanstd(data_list, axis=0)[:,-1]
 
     print('np.shape(data_list): {}'.format(np.shape(data_list)))
     print('np.shape(data_mean): {}'.format(np.shape(data_mean)))
