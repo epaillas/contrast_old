@@ -2,13 +2,16 @@
 FC = gfortran
 MPIFC = mpif90
 
-MLIBS = -lm
+MLIBS = -lm -fopenmp
 
 #################
 
-EXES = tpcf.exe s_mu_tpcf.exe s_pi_tpcf.exe std_los_velocity_vs_rmu.exe mean_radial_velocity_vs_r.exe
+EXES = omp_tpcf.exe tpcf.exe s_mu_tpcf.exe s_pi_tpcf.exe std_los_velocity_vs_rmu.exe mean_radial_velocity_vs_r.exe
 
 all: $(EXES)
+
+omp_tpcf.exe: omp_tpcf.o
+	$(FC) omp_tpcf.o -o omp_tpcf.exe $(MLIBS)
 
 tpcf.exe: tpcf.o
 	$(FC) tpcf.o -o tpcf.exe $(MLIBS)
@@ -26,6 +29,8 @@ mean_radial_velocity_vs_r.exe: mean_radial_velocity_vs_r.o
 	$(FC) mean_radial_velocity_vs_r.o -o mean_radial_velocity_vs_r.exe $(MLIBS)
 
 
+omp_tpcf.o: omp_tpcf.f90
+	$(FC) -c omp_tpcf.f90
 
 tpcf.o: tpcf.f90
 	$(FC) -c tpcf.f90
