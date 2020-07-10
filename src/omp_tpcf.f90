@@ -151,7 +151,7 @@ program tpcf
     write(*,*) omp_get_max_threads()
     write(*,*) omp_get_num_threads()
     
-!$OMP PARALLEL DO
+!$OMP PARALLEL
     do i = 1, ncentres
   
       ipx = int(centres(1, i) / rgrid + 1.)
@@ -208,7 +208,7 @@ program tpcf
         end do
       end do
     end do
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
   
     do i = 1, dim1_nbin
       vol = 4./3 * pi * (rbin_edges(i + 1) ** 3 - rbin_edges(i) ** 3)
