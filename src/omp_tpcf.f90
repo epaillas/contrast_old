@@ -150,7 +150,11 @@
         write(*,*) omp_get_num_procs()
         write(*,*) omp_get_max_threads()
         write(*,*) omp_get_num_threads()
-        
+
+!$omp parallel
+
+!$omp end parallel
+write(*,*) 'nt ',OMP_get_num_threads()      
 !$omp parallel do private(tn)
         do i = 1, ncentres
     
