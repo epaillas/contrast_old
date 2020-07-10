@@ -12,7 +12,7 @@
         integer*8 :: indx, indy, indz, nrows, ncols
         integer*8 :: ipx, ipy, ipz, ndif
         integer*8 :: ngrid
-        integer :: nthreads
+        integer :: tn
         
         integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
         integer*8, dimension(:), allocatable :: ll
@@ -151,7 +151,7 @@
         write(*,*) omp_get_max_threads()
         write(*,*) omp_get_num_threads()
         
-!$omp parallel do
+!$omp parallel do private(tn)
         do i = 1, ncentres
     
         ipx = int(centres(1, i) / rgrid + 1.)
@@ -159,7 +159,8 @@
         ipz = int(centres(3, i) / rgrid + 1.)
     
         ndif = int(dim1_max / rgrid + 1.)
-        write(*,*) OMP_get_num_threads(), OMP_get_thread_num()
+        tn = OMP_get_thread_num()
+        write(*,*) OMP_get_num_threads(), tn
         
         do ix = ipx - ndif, ipx + ndif
             do iy = ipy - ndif, ipy + ndif
