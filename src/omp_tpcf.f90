@@ -149,14 +149,14 @@ program tpcf
     
     !$OMP PARALLEL DO
     do i = 1, ncentres
-      nthreads = OMP_get_num_threads()
-      write(*,*) nthreads
   
       ipx = int(centres(1, i) / rgrid + 1.)
       ipy = int(centres(2, i) / rgrid + 1.)
       ipz = int(centres(3, i) / rgrid + 1.)
   
       ndif = int(dim1_max / rgrid + 1.)
+      nthreads = OMP_get_num_threads()
+      write(*,*) nthreads
     
       do ix = ipx - ndif, ipx + ndif
         do iy = ipy - ndif, ipy + ndif
