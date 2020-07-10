@@ -147,7 +147,7 @@ program tpcf
     delta = 0
     call omp_set_num_threads(40)
     
-    !$OMP PARALLEL
+    !$OMP PARALLEL num_threads(40)
     !$OMP DO
     do i = 1, ncentres
   
