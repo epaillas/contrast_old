@@ -23,8 +23,6 @@ class Correlator:
         self.box_size = box_size
         self.corr_type = corr_type
 
-        os.environ["OMP_NUM_THREADS"] = "40"
-
         if os.path.isfile(data_filename):
             self.data_filename = data_filename
         else:
@@ -72,6 +70,8 @@ class Correlator:
         '''
         log_filename = self.output_filename + '.log'
 
+        os.environ["OMP_NUM_THREADS"] = "40"
+
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'omp_tpcf.exe',
                self.data_filename,
@@ -84,7 +84,7 @@ class Correlator:
                str(self.ngrid)]
         
         log = open(log_filename, 'w+')
-        subprocess.Popen(cmd, stdout=log, stderr=log)
+        subprocess.run(cmd, stdout=log, stderr=log)
 
     def s_mu_tpcf(self):
         '''
