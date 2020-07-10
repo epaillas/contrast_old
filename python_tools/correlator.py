@@ -23,6 +23,8 @@ class Correlator:
         self.box_size = box_size
         self.corr_type = corr_type
 
+        os.environ["OMP_NUM_THREADS"] = "40"
+
         if os.path.isfile(data_filename):
             self.data_filename = data_filename
         else:
