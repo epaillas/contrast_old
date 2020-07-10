@@ -84,7 +84,7 @@ class Correlator:
                str(self.ngrid)]
         
         log = open(log_filename, 'w+')
-        subprocess.call(cmd, stdout=log, stderr=log)
+        subprocess.Popen(cmd, stdout=log, stderr=log)
 
     def s_mu_tpcf(self):
         '''
