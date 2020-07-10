@@ -145,9 +145,13 @@ program tpcf
     
     DD = 0
     delta = 0
-    call omp_set_num_threads(40)
+    CALL OMP_SET_NUM_THREADS(10)
+
+    write(*,*) omp_get_num_procs()
+    write(*,*) omp_get_max_threads()
+    write(*,*) omp_get_num_threads()
     
-!$OMP PARALLEL DO NUM_THREADS(10)
+!$OMP PARALLEL DO
     do i = 1, ncentres
   
       ipx = int(centres(1, i) / rgrid + 1.)
