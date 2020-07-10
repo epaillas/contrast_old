@@ -147,8 +147,7 @@ program tpcf
     delta = 0
     call omp_set_num_threads(40)
     
-    !$OMP PARALLEL num_threads(40)
-    !$OMP DO
+    !$OMP PARALLEL DO NUM_THREADS(10)
     do i = 1, ncentres
   
       ipx = int(centres(1, i) / rgrid + 1.)
@@ -156,8 +155,7 @@ program tpcf
       ipz = int(centres(3, i) / rgrid + 1.)
   
       ndif = int(dim1_max / rgrid + 1.)
-      nthreads = OMP_get_num_threads()
-      write(*,*) nthreads
+      write(*,*) OMP_get_num_threads(), OMP_get_thread_num()
     
       do ix = ipx - ndif, ipx + ndif
         do iy = ipy - ndif, ipy + ndif
@@ -206,8 +204,7 @@ program tpcf
         end do
       end do
     end do
-    !$OMP END DO
-    !$OMP END PARALLEL
+    !$OMP END PARALLEL DO
   
     do i = 1, dim1_nbin
       vol = 4./3 * pi * (rbin_edges(i + 1) ** 3 - rbin_edges(i) ** 3)
