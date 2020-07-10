@@ -12,6 +12,7 @@ program tpcf
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
+    integer :: nthreads
     
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
@@ -147,7 +148,8 @@ program tpcf
     
     !$OMP PARALLEL DO
     do i = 1, ncentres
-      write(*,*) OMP_get_num_threads()
+      nthreads = OMP_get_num_threads()
+      write(*,*) nthreads
   
       ipx = int(centres(1, i) / rgrid + 1.)
       ipy = int(centres(2, i) / rgrid + 1.)
