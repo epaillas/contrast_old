@@ -71,7 +71,7 @@ class Correlator:
         log_filename = self.output_filename + '.log'
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'tpcf.exe',
+        cmd = [binpath + 'omp_tpcf.exe',
                self.data_filename,
                self.data_filename_2,
                self.output_filename,
