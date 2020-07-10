@@ -147,6 +147,7 @@ program tpcf
     
     !$OMP PARALLEL DO
     do i = 1, ncentres
+      write(*,*) OMP_get_num_threads()
   
       ipx = int(centres(1, i) / rgrid + 1.)
       ipy = int(centres(2, i) / rgrid + 1.)
