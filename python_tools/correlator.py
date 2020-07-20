@@ -70,10 +70,8 @@ class Correlator:
         '''
         log_filename = self.output_filename + '.log'
 
-        os.environ["OMP_NUM_THREADS"] = "40"
-
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'omp_tpcf.exe',
+        cmd = [binpath + 'tpcf.exe',
                self.data_filename,
                self.data_filename_2,
                self.output_filename,
