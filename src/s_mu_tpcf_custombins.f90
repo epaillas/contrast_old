@@ -3,7 +3,7 @@ program s_mu_tpcf
 
     real*8 :: rgrid, boxsize, vol, rhomed
     real*8 :: disx, disy, disz, dis, mu
-    real*8 :: rwidth, dim1_max, dim1_min
+    real*8 :: dim1_max, dim1_min
     real*8 :: muwidth, mumin, mumax
     real*8 :: pi = 4.*atan(1.)
 
@@ -97,12 +97,13 @@ program s_mu_tpcf
     allocate (DD(dim1_nbin, dim2_nbin))
     allocate (delta(dim1_nbin, dim2_nbin))
 
-    rwidth = (dim1_max - dim1_min)/dim1_nbin
-    do i = 1, dim1_nbin + 1
-        rbin_edges(i) = dim1_min + (i - 1)*rwidth
-    end do
+    rbin_edges = (/ 0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 24.0,&
+                 &  27.0, 30.0, 33.0, 36.0, 39.0, 48.0, 57.0, 66.0, 75.0,&
+                 84.0, 90.0, 96.0, 102.0, 108.0, 114.0, 120.0, 126.0, 132.0,&
+                 138.0, 144.0, 150.0 /)
+
     do i = 1, dim1_nbin
-        rbin(i) = rbin_edges(i + 1) - rwidth/2.
+        rbin(i) = (rbin_edges(i) + rbin_edges(i + 1)) / 2
     end do
 
     mumin = -1
@@ -205,7 +206,11 @@ program s_mu_tpcf
                             mu = dot_product(r, com)/(norm2(r)*norm2(com))
 
                             if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
-                                rind = int((dis - dim1_min)/rwidth + 1)
+                                rind = 1
+                                do while (dis .gt. rbin_edges(rind + 1))
+                                    rind = rind + 1
+                                end do
+
                                 muind = int((mu - mumin)/muwidth + 1)
                                 DD(rind, muind) = DD(rind, muind) + 1
                             end if

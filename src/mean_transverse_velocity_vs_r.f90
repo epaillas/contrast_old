@@ -1,14 +1,14 @@
-program s_mu_tpcf
+program mean_radial_velocity_vs_r
+    use procedures
     implicit none
 
-    real*8 :: rgrid, boxsize, vol, rhomed
-    real*8 :: disx, disy, disz, dis, mu
+    real*8 :: rgrid, boxsize
+    real*8 :: disx, disy, disz, dis, vr, vt
+    real*8 :: velx, vely, velz
     real*8 :: rwidth, dim1_max, dim1_min
-    real*8 :: muwidth, mumin, mumax
-    real*8 :: pi = 4.*atan(1.)
 
-    integer*8 :: ntracers, ncentres, dim1_nbin, rind, dim2_nbin, muind
-    integer*8 :: i, j, ii, ix, iy, iz, ix2, iy2, iz2
+    integer*8 :: ntracers, ncentres, dim1_nbin, rind
+    integer*8 :: i, ii, ix, iy, iz, ix2, iy2, iz2
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
@@ -16,53 +16,56 @@ program s_mu_tpcf
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
 
-    real*8, dimension(3) :: r, com
+    real*8, dimension(3) :: r, vel
     real*8, allocatable, dimension(:, :)  :: tracers, centres
-    real*8, dimension(:, :), allocatable :: DD, delta
-    real*8, dimension(:), allocatable :: rbin, rbin_edges, mubin, mubin_edges
+    real*8, dimension(:), allocatable :: DD
+    real*8, dimension(:), allocatable :: VV, mean_vt
+    real*8, dimension(:), allocatable :: rbin, rbin_edges
+
+    logical :: has_velocity = .false.
+    logical :: is_formatted
 
     character(20), external :: str
-    character(len=500) :: input_tracers, centres_filename, output_filename
-    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, dim2_nbin_char, ngrid_char, box_char
+    character(100) :: test
+    character(len=500) :: data_filename, data_filename_2, output_filename
+    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
 
-    if (iargc() .ne. 9) then
+    if (iargc() .ne. 8) then
         write (*, *) 'Some arguments are missing.'
         write (*, *) '1) data_filename'
-        write (*, *) '2) centres_filename'
+        write (*, *) '2) data_filename_2'
         write (*, *) '3) output_filename'
         write (*, *) '4) boxsize'
         write (*, *) '5) dim1_min'
         write (*, *) '6) dim1_max'
         write (*, *) '7) dim1_nbin'
-        write (*, *) '8) dim2_nbin'
-        write (*, *) '9) ngrid'
+        write (*, *) '8) ngrid'
+        write (*, *) '9) has_velocity'
         write (*, *) ''
         stop
     end if
 
-    call getarg(1, input_tracers)
-    call getarg(2, centres_filename)
+    call getarg(1, data_filename)
+    call getarg(2, data_filename_2)
     call getarg(3, output_filename)
     call getarg(4, box_char)
     call getarg(5, dim1_min_char)
     call getarg(6, dim1_max_char)
     call getarg(7, dim1_nbin_char)
-    call getarg(8, dim2_nbin_char)
-    call getarg(9, ngrid_char)
+    call getarg(8, ngrid_char)
 
     read (box_char, *) boxsize
     read (dim1_min_char, *) dim1_min
     read (dim1_max_char, *) dim1_max
     read (dim1_nbin_char, *) dim1_nbin
-    read (dim2_nbin_char, *) dim2_nbin
     read (ngrid_char, *) ngrid
 
     write (*, *) '-----------------------'
-    write (*, *) 'Running s_mu_tpcf.exe'
+    write (*, *) 'Running mean_transverse_velocity_vs_r.exe'
     write (*, *) 'input parameters:'
     write (*, *) ''
-    write (*, *) 'input_tracers: ', trim(input_tracers)
-    write (*, *) 'centres_filename: ', trim(centres_filename)
+    write (*, *) 'data_filename: ', trim(data_filename)
+    write (*, *) 'data_filename_2: ', trim(data_filename_2)
     write (*, *) 'boxsize: ', trim(box_char)
     write (*, *) 'output_filename: ', trim(output_filename)
     write (*, *) 'dim1_min: ', trim(dim1_min_char), ' Mpc'
@@ -71,7 +74,9 @@ program s_mu_tpcf
     write (*, *) 'ngrid: ', trim(ngrid_char)
     write (*, *) ''
 
-    open (10, file=input_tracers, status='old', form='unformatted')
+    !call detect_format(data_filename, is_formatted)
+
+    open (10, file=data_filename, status='old', form='unformatted')
     read (10) nrows
     read (10) ncols
     allocate (tracers(ncols, nrows))
@@ -81,21 +86,26 @@ program s_mu_tpcf
     write (*, *) 'ntracers dim: ', size(tracers, dim=1), size(tracers, dim=2)
     write (*, *) 'pos(min), pos(max) = ', minval(tracers(1, :)), maxval(tracers(1, :))
 
-    open (11, file=centres_filename, status='old', form='unformatted')
+    open (11, file=data_filename_2, status='old', form='unformatted')
     read (11) nrows
     read (11) ncols
     allocate (centres(ncols, nrows))
     read (11) centres
     close (11)
     ncentres = nrows
+    if (ncols .ge. 6) then
+        has_velocity = .true.
+        write (*, *) 'Centres file includes velocity. Pairwise velocity will be computed.'
+    else
+        write (*, *) 'Centres file is missing velocity. Centre motion will be ignored.'
+    end if
     write (*, *) 'ncentres dim: ', size(centres, dim=1), size(centres, dim=2)
 
     allocate (rbin(dim1_nbin))
-    allocate (mubin(dim2_nbin))
     allocate (rbin_edges(dim1_nbin + 1))
-    allocate (mubin_edges(dim2_nbin + 1))
-    allocate (DD(dim1_nbin, dim2_nbin))
-    allocate (delta(dim1_nbin, dim2_nbin))
+    allocate (DD(dim1_nbin))
+    allocate (VV(dim1_nbin))
+    allocate (mean_vt(dim1_nbin))
 
     rwidth = (dim1_max - dim1_min)/dim1_nbin
     do i = 1, dim1_nbin + 1
@@ -104,20 +114,6 @@ program s_mu_tpcf
     do i = 1, dim1_nbin
         rbin(i) = rbin_edges(i + 1) - rwidth/2.
     end do
-
-    mumin = -1
-    mumax = 1
-
-    muwidth = (mumax - mumin)/dim2_nbin
-    do i = 1, dim2_nbin + 1
-        mubin_edges(i) = mumin + (i - 1)*muwidth
-    end do
-    do i = 1, dim2_nbin
-        mubin(i) = mubin_edges(i + 1) - muwidth/2.
-    end do
-
-    ! Mean density inside the box
-    rhomed = ntracers/(boxsize**3)
 
     ! Construct linked list for tracers
     write (*, *) ''
@@ -156,10 +152,11 @@ program s_mu_tpcf
 
     write (*, *) 'Linked list successfully constructed'
     write (*, *) ''
-    write (*, *) 'Starting loop over centres...'
+    write (*, *) 'Starting loop over tracers...'
 
     DD = 0
-    delta = 0
+    VV = 0
+    mean_vt = 0
 
     do i = 1, ncentres
 
@@ -200,14 +197,26 @@ program s_mu_tpcf
                             if (disz .gt. boxsize/2) disz = disz - boxsize
 
                             r = (/disx, disy, disz/)
-                            com = (/0, 0, 1/)
                             dis = norm2(r)
-                            mu = dot_product(r, com)/(norm2(r)*norm2(com))
+
+                            if (has_velocity) then
+                                velx = tracers(4, ii) - centres(4, i)
+                                vely = tracers(5, ii) - centres(5, i)
+                                velz = tracers(6, ii) - centres(6, i)
+                            else
+                                velx = tracers(4, ii)
+                                vely = tracers(5, ii)
+                                velz = tracers(6, ii)
+                            end if
+
+                            vel = (/velx, vely, velz/)
+                            vr = dot_product(vel, r)/norm2(r)
+                            vt = norm2(vel - vr*r/norm2(r))
 
                             if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
                                 rind = int((dis - dim1_min)/rwidth + 1)
-                                muind = int((mu - mumin)/muwidth + 1)
-                                DD(rind, muind) = DD(rind, muind) + 1
+                                DD(rind) = DD(rind) + 1
+                                VV(rind) = VV(rind) + vt
                             end if
 
                             if (ii .eq. lirst(ix2, iy2, iz2)) exit
@@ -220,20 +229,15 @@ program s_mu_tpcf
     end do
 
     do i = 1, dim1_nbin
-        do j = 1, dim2_nbin
-            vol = 4./3*pi*(rbin_edges(i + 1)**3 - rbin_edges(i)**3)/(dim2_nbin)
-            delta(i, j) = DD(i, j)/(vol*rhomed*ncentres) - 1
-        end do
+        mean_vt(i) = VV(i)/DD(i)
     end do
 
     write (*, *) ''
     write (*, *) 'Calculation finished. Writing output...'
 
     open (12, file=output_filename, status='replace')
-    do j = 1, dim2_nbin
-        do i = 1, dim1_nbin
-            write (12, fmt='(3f15.5)') rbin(i), mubin(j), delta(i, j)
-        end do
+    do i = 1, dim1_nbin
+        write (12, fmt='(2f15.5)') rbin(i), mean_vt(i)
     end do
 
-end program s_mu_tpcf
+end program mean_radial_velocity_vs_r
