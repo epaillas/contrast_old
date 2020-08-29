@@ -1,14 +1,13 @@
-program mean_radial_velocity_vs_r
-    use procedures
+program los_pvd_vs_rmu
     implicit none
 
     real*8 :: rgrid, boxsize
-    real*8 :: disx, disy, disz, dis, vr, vt
+    real*8 :: disx, disy, disz, dis, vrad
     real*8 :: velx, vely, velz
     real*8 :: rwidth, dim1_max, dim1_min
 
     integer*8 :: ntracers, ncentres, dim1_nbin, rind
-    integer*8 :: i, ii, ix, iy, iz, ix2, iy2, iz2
+    integer*8 :: i, j, ii, ix, iy, iz, ix2, iy2, iz2
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
@@ -16,21 +15,18 @@ program mean_radial_velocity_vs_r
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
 
-    real*8, dimension(3) :: r, vel
+    real*8, dimension(3) :: r, v
     real*8, allocatable, dimension(:, :)  :: tracers, centres
-    real*8, dimension(:), allocatable :: DD
-    real*8, dimension(:), allocatable :: VV, mean_vt
+    real*8, dimension(:), allocatable :: DD, VV, VV2, std_vrad
     real*8, dimension(:), allocatable :: rbin, rbin_edges
 
     logical :: has_velocity = .false.
-    logical :: is_formatted
 
     character(20), external :: str
-    character(100) :: test
     character(len=500) :: data_filename, data_filename_2, output_filename
-    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
+    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, dim2_nbin_char, ngrid_char, box_char
 
-    if (iargc() .ne. 8) then
+    if (iargc() .ne. 9) then
         write (*, *) 'Some arguments are missing.'
         write (*, *) '1) data_filename'
         write (*, *) '2) data_filename_2'
@@ -39,8 +35,8 @@ program mean_radial_velocity_vs_r
         write (*, *) '5) dim1_min'
         write (*, *) '6) dim1_max'
         write (*, *) '7) dim1_nbin'
-        write (*, *) '8) ngrid'
-        write (*, *) '9) has_velocity'
+        write (*, *) '8) dim2_nbin'
+        write (*, *) '9) ngrid'
         write (*, *) ''
         stop
     end if
@@ -52,7 +48,8 @@ program mean_radial_velocity_vs_r
     call getarg(5, dim1_min_char)
     call getarg(6, dim1_max_char)
     call getarg(7, dim1_nbin_char)
-    call getarg(8, ngrid_char)
+    call getarg(8, dim2_nbin_char)
+    call getarg(9, ngrid_char)
 
     read (box_char, *) boxsize
     read (dim1_min_char, *) dim1_min
@@ -61,7 +58,7 @@ program mean_radial_velocity_vs_r
     read (ngrid_char, *) ngrid
 
     write (*, *) '-----------------------'
-    write (*, *) 'Running mean_transverse_velocity_vs_r.exe'
+    write (*, *) 'Running CF_los_velocity_vs_rmu.exe'
     write (*, *) 'input parameters:'
     write (*, *) ''
     write (*, *) 'data_filename: ', trim(data_filename)
@@ -73,8 +70,6 @@ program mean_radial_velocity_vs_r
     write (*, *) 'dim1_nbin: ', trim(dim1_nbin_char)
     write (*, *) 'ngrid: ', trim(ngrid_char)
     write (*, *) ''
-
-    !call detect_format(data_filename, is_formatted)
 
     open (10, file=data_filename, status='old', form='unformatted')
     read (10) nrows
@@ -105,7 +100,8 @@ program mean_radial_velocity_vs_r
     allocate (rbin_edges(dim1_nbin + 1))
     allocate (DD(dim1_nbin))
     allocate (VV(dim1_nbin))
-    allocate (mean_vt(dim1_nbin))
+    allocate (VV2(dim1_nbin))
+    allocate (std_vrad(dim1_nbin))
 
     rwidth = (dim1_max - dim1_min)/dim1_nbin
     do i = 1, dim1_nbin + 1
@@ -156,7 +152,7 @@ program mean_radial_velocity_vs_r
 
     DD = 0
     VV = 0
-    mean_vt = 0
+    VV2 = 0
 
     do i = 1, ncentres
 
@@ -209,14 +205,14 @@ program mean_radial_velocity_vs_r
                                 velz = tracers(6, ii)
                             end if
 
-                            vel = (/velx, vely, velz/)
-                            vr = dot_product(vel, r)/norm2(r)
-                            vt = norm2(vel - vr*r/norm2(r))
+                            v = (/velx, vely, velz/)
+                            vrad = dot_product(v, r)
 
                             if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
                                 rind = int((dis - dim1_min)/rwidth + 1)
                                 DD(rind) = DD(rind) + 1
-                                VV(rind) = VV(rind) + vt
+                                VV(rind) = VV(rind) + vrad
+                                VV2(rind) = VV2(rind) + vrad**2
                             end if
 
                             if (ii .eq. lirst(ix2, iy2, iz2)) exit
@@ -229,7 +225,7 @@ program mean_radial_velocity_vs_r
     end do
 
     do i = 1, dim1_nbin
-        mean_vt(i) = VV(i)/DD(i)
+        std_vrad(i) = sqrt((VV2(i) - (VV(i)**2/DD(i)))/(DD(i) - 1))
     end do
 
     write (*, *) ''
@@ -237,7 +233,7 @@ program mean_radial_velocity_vs_r
 
     open (12, file=output_filename, status='replace')
     do i = 1, dim1_nbin
-        write (12, fmt='(2f15.5)') rbin(i), mean_vt(i)
+        write (12, fmt='(3f15.5)') rbin(i), std_vrad(i)
     end do
 
-end program mean_radial_velocity_vs_r
+end program los_pvd_vs_rmu

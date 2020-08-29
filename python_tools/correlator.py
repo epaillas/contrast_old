@@ -130,7 +130,7 @@ class Correlator:
 
     def mean_radial_velocity_vs_r(self):
         '''
-        Line-of-sight pairwise velocity (mean and dispersion)
+        Line-of-sight mean pairwise velocity
         as a function of r and mu.
         '''
         log_filename = self.output_filename + '.log'
@@ -149,9 +149,51 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
+    def std_radial_velocity_vs_r(self):
+        '''
+        Radial pairwise velocity dispersion
+        as a function of r.
+        '''
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'std_radial_velocity_vs_r.exe',
+               self.data_filename,
+               self.data_filename_2,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.ngrid)]
+        
+        log = open(log_filename, 'w+')
+        subprocess.call(cmd, stdout=log, stderr=log)
+
+    def std_transverse_velocity_vs_r(self):
+        '''
+        Transverse pairwise velocity dispersion
+        as a function of r.
+        '''
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'std_transverse_velocity_vs_r.exe',
+               self.data_filename,
+               self.data_filename_2,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.ngrid)]
+        
+        log = open(log_filename, 'w+')
+        subprocess.call(cmd, stdout=log, stderr=log)
+
     def std_los_velocity_vs_rmu(self):
         '''
-        Line-of-sight pairwise velocity (mean and dispersion)
+        Line-of-sight pairwise velocity dispersion
         as a function of r and mu.
         '''
         log_filename = self.output_filename + '.log'
