@@ -204,8 +204,8 @@ program los_pvd_vs_rmu
                             end if
 
                             v = (/velx, vely, velz/)
-                            vrad = dot_product(v, r)
-                            vtra = norm2(v - vrad * r)
+                            vrad = dot_product(v, r) / norm2(r)
+                            vtra = norm2(v - vrad * r / norm2(r))
 
                             if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
                                 rind = int((dis - dim1_min)/rwidth + 1)
