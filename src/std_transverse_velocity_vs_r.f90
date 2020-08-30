@@ -26,7 +26,7 @@ program los_pvd_vs_rmu
     character(len=500) :: data_filename, data_filename_2, output_filename
     character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, dim2_nbin_char, ngrid_char, box_char
 
-    if (iargc() .ne. 9) then
+    if (iargc() .ne. 8) then
         write (*, *) 'Some arguments are missing.'
         write (*, *) '1) data_filename'
         write (*, *) '2) data_filename_2'
@@ -35,8 +35,7 @@ program los_pvd_vs_rmu
         write (*, *) '5) dim1_min'
         write (*, *) '6) dim1_max'
         write (*, *) '7) dim1_nbin'
-        write (*, *) '8) dim2_nbin'
-        write (*, *) '9) ngrid'
+        write (*, *) '8) ngrid'
         write (*, *) ''
         stop
     end if
@@ -48,8 +47,7 @@ program los_pvd_vs_rmu
     call getarg(5, dim1_min_char)
     call getarg(6, dim1_max_char)
     call getarg(7, dim1_nbin_char)
-    call getarg(8, dim2_nbin_char)
-    call getarg(9, ngrid_char)
+    call getarg(8, ngrid_char)
 
     read (box_char, *) boxsize
     read (dim1_min_char, *) dim1_min
