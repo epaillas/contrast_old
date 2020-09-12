@@ -1,16 +1,17 @@
 program tpcf
     implicit none
     
-    real*8 :: rgrid, boxsize, vol, rhomed
-    real*8 :: disx, disy, disz, dis
+    real*8 :: rgrid_x, rgrid_y, rgrid_z
+    real*8 :: boxsize_x, boxsize_y, boxsize_z
+    real*8 :: disx, disy, disz, dis, vol, rhomed
     real*8 :: rwidth, dim1_max, dim1_min
     real*8 :: pi = 4.*atan(1.)
     
     integer*8 :: ntracers, ncentres, dim1_nbin, rind
     integer*8 :: i, ii, ix, iy, iz, ix2, iy2, iz2
     integer*8 :: indx, indy, indz, nrows, ncols
-    integer*8 :: ipx, ipy, ipz, ndif
-    integer*8 :: ngrid
+    integer*8 :: ipx, ipy, ipz, ndif_x, ndif_y, ndif_z
+    integer*8 :: ngrid_x, ngrid_y, ngrid_z
     
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
@@ -22,18 +23,24 @@ program tpcf
   
     character(20), external :: str
     character(len=500) :: data_filename, data_filename_2, output_filename
-    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
-    
-    if (iargc() .ne. 8) then
+    character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char
+    character(len=10) :: boxchar_x, boxchar_y, boxchar_z
+    character(len=10) :: ngridchar_x, ngridchar_y, ngridchar_z
+
+    if (iargc() .ne. 12) then
         write(*,*) 'Some arguments are missing.'
         write(*,*) '1) data_filename'
         write(*,*) '2) data_filename_2'
         write(*,*) '3) output_filename'
-        write(*,*) '4) boxsize'
-        write(*,*) '5) dim1_min'
-        write(*,*) '6) dim1_max'
-        write(*,*) '7) dim1_nbin'
-        write(*,*) '8) ngrid'
+        write(*,*) '4) boxsize_x'
+        write(*,*) '5) boxsize_y'
+        write(*,*) '6) boxsize_z'
+        write(*,*) '7) dim1_min'
+        write(*,*) '8) dim1_max'
+        write(*,*) '9) dim1_nbin'
+        write(*,*) '10) ngrid_x'
+        write(*,*) '11) ngrid_y'
+        write(*,*) '12) ngrid_z'
         write(*,*) ''
         stop
       end if
@@ -41,30 +48,42 @@ program tpcf
     call getarg(1, data_filename)
     call getarg(2, data_filename_2)
     call getarg(3, output_filename)
-    call getarg(4, box_char)
-    call getarg(5, dim1_min_char)
-    call getarg(6, dim1_max_char)
-    call getarg(7, dim1_nbin_char)
-    call getarg(8, ngrid_char)
+    call getarg(4, boxchar_x)
+    call getarg(5, boxchar_y)
+    call getarg(6, boxchar_z)
+    call getarg(7, dim1_min_char)
+    call getarg(8, dim1_max_char)
+    call getarg(9, dim1_nbin_char)
+    call getarg(10, ngridchar_x)
+    call getarg(11, ngridchar_y)
+    call getarg(12, ngridchar_z)
     
-    read(box_char, *) boxsize
+    read(boxchar_x, *) boxsize_x
+    read(boxchar_y, *) boxsize_y
+    read(boxchar_z, *) boxsize_z
     read(dim1_min_char, *) dim1_min
     read(dim1_max_char, *) dim1_max
     read(dim1_nbin_char, *) dim1_nbin
-    read(ngrid_char, *) ngrid
+    read(ngridchar_x, *) ngrid_x
+    read(ngridchar_y, *) ngrid_y
+    read(ngridchar_z, *) ngrid_z
     
     write(*,*) '-----------------------'
-    write(*,*) 'Running CF_xi_vs_r.exe'
+    write(*,*) 'Running tpcf.exe'
     write(*,*) 'input parameters:'
     write(*,*) ''
     write(*, *) 'data_filename: ', trim(data_filename)
     write(*, *) 'data_filename_2: ', trim(data_filename_2)
-    write(*, *) 'boxsize: ', trim(box_char)
+    write(*, *) 'boxsize_x: ', trim(boxchar_x)
+    write(*, *) 'boxsize_y: ', trim(boxchar_y)
+    write(*, *) 'boxsize_z: ', trim(boxchar_z)
     write(*, *) 'output_filename: ', trim(output_filename)
     write(*, *) 'dim1_min: ', trim(dim1_min_char), ' Mpc'
     write(*, *) 'dim1_max: ', trim(dim1_max_char), ' Mpc'
     write(*, *) 'dim1_nbin: ', trim(dim1_nbin_char)
-    write(*, *) 'ngrid: ', trim(ngrid_char)
+    write(*, *) 'ngrid_x: ', trim(ngridchar_x)
+    write(*, *) 'ngrid_y: ', trim(ngridchar_y)
+    write(*, *) 'ngrid_z: ', trim(ngridchar_z)
     write(*,*) ''
   
     open(10, file=data_filename, status='old', form='unformatted')
@@ -100,38 +119,40 @@ program tpcf
     end do
     
     ! Mean density inside the box
-    rhomed = ntracers / (boxsize ** 3)
+    rhomed = ntracers / (boxsize_x * boxsize_y * boxsize_z)
     
     ! Construct linked list for tracers
     write(*,*) ''
     write(*,*) 'Constructing linked list...'
-    allocate(lirst(ngrid, ngrid, ngrid))
-    allocate(nlirst(ngrid, ngrid, ngrid))
+    allocate(lirst(ngrid_x, ngrid_y, ngrid_z))
+    allocate(nlirst(ngrid_x, ngrid_y, ngrid_z))
     allocate(ll(ntracers))
-    rgrid = (boxsize) / real(ngrid)
+    rgrid_x = boxsize_x / real(ngrid_x)
+    rgrid_y = boxsize_y / real(ngrid_y)
+    rgrid_z = boxsize_z / real(ngrid_z)
     
     lirst = 0
     ll = 0
     
     do i = 1, ntracers
-      indx = int((tracers(1, i)) / rgrid + 1.)
-      indy = int((tracers(2, i)) / rgrid + 1.)
-      indz = int((tracers(3, i)) / rgrid + 1.)
+      indx = int((tracers(1, i)) / rgrid_x + 1.)
+      indy = int((tracers(2, i)) / rgrid_y + 1.)
+      indz = int((tracers(3, i)) / rgrid_z + 1.)
     
-      if(indx.gt.0.and.indx.le.ngrid.and.indy.gt.0.and.indy.le.ngrid.and.&
-      indz.gt.0.and.indz.le.ngrid)lirst(indx,indy,indz)=i
+      if(indx.gt.0.and.indx.le.ngrid_x.and.indy.gt.0.and.indy.le.ngrid_y.and.&
+      indz.gt.0.and.indz.le.ngrid_z)lirst(indx,indy,indz)=i
     
-      if(indx.gt.0.and.indx.le.ngrid.and.indy.gt.0.and.indy.le.ngrid.and.&
-      indz.gt.0.and.indz.le.ngrid)nlirst(indx,indy,indz) = &
+      if(indx.gt.0.and.indx.le.ngrid_x.and.indy.gt.0.and.indy.le.ngrid_y.and.&
+      indz.gt.0.and.indz.le.ngrid_z)nlirst(indx,indy,indz) = &
       nlirst(indx, indy, indz) + 1
     end do
     
     do i = 1, ntracers
-      indx = int((tracers(1, i))/ rgrid + 1.)
-      indy = int((tracers(2, i))/ rgrid + 1.)
-      indz = int((tracers(3, i))/ rgrid + 1.)
-      if(indx.gt.0.and.indx.le.ngrid.and.indy.gt.0.and.indy.le.ngrid.and.&
-      &indz.gt.0.and.indz.le.ngrid) then
+      indx = int((tracers(1, i))/ rgrid_x + 1.)
+      indy = int((tracers(2, i))/ rgrid_y + 1.)
+      indz = int((tracers(3, i))/ rgrid_z + 1.)
+      if(indx.gt.0.and.indx.le.ngrid_x.and.indy.gt.0.and.indy.le.ngrid_y.and.&
+      &indz.gt.0.and.indz.le.ngrid_z) then
         ll(lirst(indx,indy,indz)) = i
         lirst(indx,indy,indz) = i
       endif
@@ -146,26 +167,28 @@ program tpcf
     
     do i = 1, ncentres
   
-      ipx = int(centres(1, i) / rgrid + 1.)
-      ipy = int(centres(2, i) / rgrid + 1.)
-      ipz = int(centres(3, i) / rgrid + 1.)
+      ipx = int(centres(1, i) / rgrid_x + 1.)
+      ipy = int(centres(2, i) / rgrid_y + 1.)
+      ipz = int(centres(3, i) / rgrid_z + 1.)
   
-      ndif = int(dim1_max / rgrid + 1.)
+      ndif_x = int(dim1_max / rgrid_x + 1.)
+      ndif_y = int(dim1_max / rgrid_y + 1.)
+      ndif_z = int(dim1_max / rgrid_z + 1.)
     
-      do ix = ipx - ndif, ipx + ndif
-        do iy = ipy - ndif, ipy + ndif
-          do iz = ipz - ndif, ipz + ndif
+      do ix = ipx - ndif_x, ipx + ndif_x
+        do iy = ipy - ndif_y, ipy + ndif_y
+          do iz = ipz - ndif_z, ipz + ndif_z
     
             ix2 = ix
             iy2 = iy
             iz2 = iz
     
-            if (ix2 .gt. ngrid) ix2 = ix2 - ngrid
-            if (ix2 .lt. 1) ix2 = ix2 + ngrid
-            if (iy2 .gt. ngrid) iy2 = iy2 - ngrid
-            if (iy2 .lt. 1) iy2 = iy2 + ngrid
-            if (iz2 .gt. ngrid) iz2 = iz2 - ngrid
-            if (iz2 .lt. 1) iz2 = iz2 + ngrid
+            if (ix2 .gt. ngrid_x) ix2 = ix2 - ngrid_x
+            if (ix2 .lt. 1) ix2 = ix2 + ngrid_x
+            if (iy2 .gt. ngrid_y) iy2 = iy2 - ngrid_y
+            if (iy2 .lt. 1) iy2 = iy2 + ngrid_y
+            if (iz2 .gt. ngrid_z) iz2 = iz2 - ngrid_z
+            if (iz2 .lt. 1) iz2 = iz2 + ngrid_z
     
             ii = lirst(ix2,iy2,iz2)
             if(ii.ne.0) then
@@ -175,12 +198,12 @@ program tpcf
                 disy = tracers(2, ii) - centres(2, i)
                 disz = tracers(3, ii) - centres(3, i)
   
-                if (disx .lt. -boxsize/2) disx = disx + boxsize
-                if (disx .gt. boxsize/2) disx = disx - boxsize
-                if (disy .lt. -boxsize/2) disy = disy + boxsize
-                if (disy .gt. boxsize/2) disy = disy - boxsize
-                if (disz .lt. -boxsize/2) disz = disz + boxsize
-                if (disz .gt. boxsize/2) disz = disz - boxsize
+                if (disx .lt. -boxsize_x/2) disx = disx + boxsize_x
+                if (disx .gt. boxsize_x/2) disx = disx - boxsize_x
+                if (disy .lt. -boxsize_y/2) disy = disy + boxsize_y
+                if (disy .gt. boxsize_y/2) disy = disy - boxsize_y
+                if (disz .lt. -boxsize_z/2) disz = disz + boxsize_z
+                if (disz .gt. boxsize_z/2) disz = disz - boxsize_z
     
                 r = (/ disx, disy, disz /)
                 dis = norm2(r)
