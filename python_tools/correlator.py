@@ -3,6 +3,7 @@ import subprocess
 import os
 from python_tools.utilities import Utilities
 
+
 class Correlator:
 
     def __init__(self,
@@ -32,7 +33,7 @@ class Correlator:
             self.data_filename_2 = self.data_filename
         else:
             self.data_filename_2 = data_filename_2
-        
+
         self.dim1_min = dim1_min
         self.dim2_min = dim2_min
         self.dim1_max = dim1_max
@@ -61,8 +62,6 @@ class Correlator:
         # run the desired correlation function
         getattr(self, corr_type)()
 
-
-
     def tpcf(self):
         '''
         Two point autocorrelation function
@@ -80,7 +79,7 @@ class Correlator:
                str(self.dim1_max),
                str(self.dim1_nbin),
                str(self.ngrid)]
-        
+
         log = open(log_filename, 'w+')
         subprocess.run(cmd, stdout=log, stderr=log)
 
@@ -102,7 +101,7 @@ class Correlator:
                str(self.dim1_nbin),
                str(self.dim2_nbin),
                str(self.ngrid)]
-        
+
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
@@ -124,7 +123,7 @@ class Correlator:
                str(self.dim1_max),
                str(self.dim1_nbin),
                str(self.ngrid)]
-        
+
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
@@ -145,7 +144,7 @@ class Correlator:
                str(self.dim1_max),
                str(self.dim1_nbin),
                str(self.ngrid)]
-        
+
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
@@ -166,7 +165,7 @@ class Correlator:
                str(self.dim1_max),
                str(self.dim1_nbin),
                str(self.ngrid)]
-        
+
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
@@ -187,7 +186,7 @@ class Correlator:
                str(self.dim1_max),
                str(self.dim1_nbin),
                str(self.ngrid)]
-        
+
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
@@ -209,6 +208,15 @@ class Correlator:
                str(self.dim1_nbin),
                str(self.dim2_nbin),
                str(self.ngrid)]
-        
+
+        log = open(log_filename, 'w+')
+        subprocess.call(cmd, stdout=log, stderr=log)
+
+    def test_omp(self):
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'omp_tpcf.exe']
+
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
