@@ -10,7 +10,7 @@ a = 0
 do i = 1, 10
   tn = OMP_get_thread_num()
   nt = OMP_get_num_threads()
-  print* , nt
+  print* , nt, tn
 !$OMP ATOMIC
 a = a + i
 end do
