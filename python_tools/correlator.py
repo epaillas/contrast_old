@@ -217,7 +217,8 @@ class Correlator:
         print('I am here')
 
         binpath = sys.path[0] + '/bin/'
-        cmd = [binpath + 'omp_tpcf.exe']
+        cmd = [binpath + 'omp_tpcf.exe',
+               '']
 
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
