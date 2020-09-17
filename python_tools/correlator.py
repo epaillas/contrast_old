@@ -218,7 +218,17 @@ class Correlator:
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'omp_tpcf.exe',
-               '']
+               self.data_filename,
+               self.data_filename_2,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.dim2_nbin),
+               str(self.ngrid)]
 
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
+
+        print('Sucessfully ran')
