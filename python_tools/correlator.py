@@ -214,6 +214,7 @@ class Correlator:
 
     def test_omp(self):
         log_filename = self.output_filename + '.log'
+        print('I am here')
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'omp_tpcf.exe']
