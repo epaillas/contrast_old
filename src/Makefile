@@ -1,8 +1,8 @@
 # Compiler choice
 FC = gfortran
-MPIFC = mpif90
+MPIFC = gfortran
 
-MLIBS = -lm -fopenmp
+MLIBS =
 
 #################
 
@@ -11,8 +11,8 @@ mean_radial_velocity_vs_r.exe std_transverse_velocity_vs_r.exe std_radial_veloci
 
 all: $(EXES)
 
-omp_tpcf.exe: omp_tpcf.o
-	$(MPIFC) omp_tpcf.o -o omp_tpcf.exe $(MLIBS)
+omp_tpcf.exe: omp_tpcf.f90
+	$(MPIFC) -fopenmp omp_tpcf.f90 -o omp_tpcf.exe $(MLIBS)
 
 tpcf.exe: tpcf.o
 	$(FC) tpcf.o -o tpcf.exe $(MLIBS)
@@ -38,9 +38,6 @@ std_radial_velocity_vs_r.exe: std_radial_velocity_vs_r.o
 std_transverse_velocity_vs_r.exe: std_transverse_velocity_vs_r.o
 	$(FC) procedures.o std_transverse_velocity_vs_r.o -o std_transverse_velocity_vs_r.exe $(MLIBS)
 
-
-omp_tpcf.o: omp_tpcf.f90
-	$(MPIFC) -c omp_tpcf.f90
 
 tpcf.o: tpcf.f90
 	$(FC) -c tpcf.f90
