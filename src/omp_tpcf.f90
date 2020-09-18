@@ -193,7 +193,7 @@ program tpcf
 
               if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
                 rind = int((dis - dim1_min) / rwidth + 1)
-                !$OMP ATOMIC
+
                 DD(rind) = DD(rind) + 1
               end if
   
