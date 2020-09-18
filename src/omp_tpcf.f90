@@ -143,22 +143,18 @@ program tpcf
   write(*,*) ''
   write(*,*) 'Starting loop over tracers...'
   
-  write(*,*) 'Max number of threads: ', OMP_GET_MAX_THREADS()
-  call OMP_SET_NUM_THREADS(OMP_GET_MAX_THREADS())
-  thread_num = OMP_get_thread_num()
-  num_threads = OMP_get_num_threads()
-  write(*,*) thread_num, num_threads
 
-  stop
+  call OMP_SET_NUM_THREADS(6))
+  write(*,*) 'Max number of threads: ', OMP_GET_MAX_THREADS()
+
 
   DD = 0
   delta = 0
   
   !$OMP PARALLEL DO
-  do i = 1, 100
+  do i = 1, 6
     thread_num = OMP_get_thread_num()
-    num_threads = OMP_get_num_threads()
-    write(*,*) thread_num, num_threads
+    write(*,*) thread_num
 
     ipx = int(centres(1, i) / rgrid + 1.)
     ipy = int(centres(2, i) / rgrid + 1.)
