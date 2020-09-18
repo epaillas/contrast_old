@@ -212,9 +212,12 @@ class Correlator:
         log = open(log_filename, 'w+')
         subprocess.call(cmd, stdout=log, stderr=log)
 
-    def test_omp(self):
+    def omp_tpcf(self):
+        '''
+        Two point autocorrelation function
+        in bins of r.
+        '''
         log_filename = self.output_filename + '.log'
-        print('I am here')
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'omp_tpcf.exe',
@@ -225,10 +228,7 @@ class Correlator:
                str(self.dim1_min),
                str(self.dim1_max),
                str(self.dim1_nbin),
-               str(self.dim2_nbin),
                str(self.ngrid)]
 
         log = open(log_filename, 'w+')
-        subprocess.call(cmd, stdout=log, stderr=log)
-
-        print('Sucessfully ran')
+        subprocess.run(cmd, stdout=log, stderr=log)
