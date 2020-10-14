@@ -7,7 +7,7 @@ MLIBS =
 #################
 
 EXES = omp_tpcf.exe tpcf.exe s_mu_tpcf.exe s_pi_tpcf.exe std_los_velocity_vs_rmu.exe s_mu_tpcf_custombins.exe \
-mean_radial_velocity_vs_r.exe std_transverse_velocity_vs_r.exe std_radial_velocity_vs_r.exe
+mean_radial_velocity_vs_r.exe std_transverse_velocity_vs_r.exe std_radial_velocity_vs_r.exe neighbour_search.exe
 
 all: $(EXES)
 
@@ -38,6 +38,9 @@ std_radial_velocity_vs_r.exe: std_radial_velocity_vs_r.o
 std_transverse_velocity_vs_r.exe: std_transverse_velocity_vs_r.o
 	$(FC) procedures.o std_transverse_velocity_vs_r.o -o std_transverse_velocity_vs_r.exe $(MLIBS)
 
+neighbour_search.exe: neighbour_search.o
+	$(FC) neighbour_search.o -o neighbour_search.exe $(MLIBS)
+
 
 tpcf.o: tpcf.f90
 	$(FC) -c tpcf.f90
@@ -63,6 +66,8 @@ std_radial_velocity_vs_r.o: std_radial_velocity_vs_r.f90
 std_transverse_velocity_vs_r.o: std_transverse_velocity_vs_r.f90
 	$(FC) -c procedures.f90 std_transverse_velocity_vs_r.f90
 
+neighbour_search.o: neighbour_search.f90
+	$(FC) -c neighbour_search.f90
 
 install: $(EXES)
 	mv $(EXES) ../bin

@@ -17,7 +17,8 @@ class Correlator:
                  dim1_nbin,
                  dim2_min,
                  dim2_max,
-                 dim2_nbin):
+                 dim2_nbin,
+                 ngrid):
 
         # declare attributes
         self.output_filename = output_filename
@@ -40,9 +41,7 @@ class Correlator:
         self.dim2_max = dim2_max
         self.dim1_nbin = dim1_nbin
         self.dim2_nbin = dim2_nbin
-
-        # need to check this
-        self.ngrid = int(self.box_size / 15)
+        self.ngrid = ngrid
 
         print('Running contrast with the following parameters:\n')
         print('corr_type: {}'.format(self.corr_type))
@@ -221,6 +220,27 @@ class Correlator:
 
         binpath = sys.path[0] + '/bin/'
         cmd = [binpath + 'omp_tpcf.exe',
+               self.data_filename,
+               self.data_filename_2,
+               self.output_filename,
+               str(self.box_size),
+               str(self.dim1_min),
+               str(self.dim1_max),
+               str(self.dim1_nbin),
+               str(self.ngrid)]
+
+        log = open(log_filename, 'w+')
+        subprocess.run(cmd, stdout=log, stderr=log)
+
+    def neighbour_search(self):
+        '''
+        Search for the number of neighbours at 
+        a given distance.
+        '''
+        log_filename = self.output_filename + '.log'
+
+        binpath = sys.path[0] + '/bin/'
+        cmd = [binpath + 'neighbour_search.exe',
                self.data_filename,
                self.data_filename_2,
                self.output_filename,
