@@ -16,7 +16,7 @@ omp_tpcf.exe: omp_tpcf.f90
 
 tpcf.exe: tpcf.o
 	$(FC) tpcf.o -o tpcf.exe $(MLIBS)
-
+	
 s_mu_tpcf.exe: s_mu_tpcf.o
 	$(FC) s_mu_tpcf.o -o s_mu_tpcf.exe $(MLIBS)
 

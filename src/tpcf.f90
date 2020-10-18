@@ -2,8 +2,8 @@ program tpcf
     implicit none
     
     real*8 :: rgrid, boxsize, vol, rhomed
-    real*8 :: disx, disy, disz, dis
-    real*8 :: rwidth, dim1_max, dim1_min
+    real*8 :: disx, disy, disz, dis, dis2
+    real*8 :: rwidth, dim1_max, dim1_min, dim1_max2, dim1_min2
     real*8 :: pi = 4.*atan(1.)
     
     integer*8 :: ntracers, ncentres, dim1_nbin, rind
@@ -11,6 +11,7 @@ program tpcf
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
+    integer*8 :: end, beginning, rate
     
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
@@ -37,6 +38,8 @@ program tpcf
         write(*,*) ''
         stop
       end if
+
+      call system_clock(beginning, rate)
       
     call getarg(1, data_filename)
     call getarg(2, data_filename_2)
@@ -143,9 +146,10 @@ program tpcf
     
     DD = 0
     delta = 0
+    dim1_min2 = dim1_min ** 2
+    dim1_max2 = dim1_max ** 2
     
     do i = 1, ncentres
-  
       ipx = int(centres(1, i) / rgrid + 1.)
       ipy = int(centres(2, i) / rgrid + 1.)
       ipz = int(centres(3, i) / rgrid + 1.)
@@ -155,6 +159,7 @@ program tpcf
       do ix = ipx - ndif, ipx + ndif
         do iy = ipy - ndif, ipy + ndif
           do iz = ipz - ndif, ipz + ndif
+            if ((ix - ipx)**2 + (iy - ipy)**2 + (iz - ipz)**2 .gt. (ndif+ 1)**2) cycle
     
             ix2 = ix
             iy2 = iy
@@ -181,11 +186,11 @@ program tpcf
                 if (disy .gt. boxsize/2) disy = disy - boxsize
                 if (disz .lt. -boxsize/2) disz = disz + boxsize
                 if (disz .gt. boxsize/2) disz = disz - boxsize
-    
-                r = (/ disx, disy, disz /)
-                dis = norm2(r)
-  
-                if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
+
+                dis2 = disx ** 2 + disy ** 2 + disz ** 2
+
+                if (dis2 .gt. dim1_min2 .and. dis2 .lt. dim1_max2) then
+                  dis = sqrt(dis2)
                   rind = int((dis - dim1_min) / rwidth + 1)
                   DD(rind) = DD(rind) + 1
                 end if
@@ -212,5 +217,8 @@ program tpcf
       write(12, fmt='(2f15.5)') rbin(i), delta(i)
     end do
   
+    call system_clock(end)
+    print *, "elapsed time: ", real(end - beginning) / real(rate)
+
     end program tpcf
     

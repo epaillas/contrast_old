@@ -12,6 +12,7 @@ program los_pvd_vs_rmu
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
+    integer*8 :: end, beginning, rate
     
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
@@ -41,6 +42,8 @@ program los_pvd_vs_rmu
         write(*,*) ''
         stop
       end if
+
+    call system_clock(beginning, rate)
       
     call getarg(1, data_filename)
     call getarg(2, data_filename_2)
@@ -170,10 +173,9 @@ program los_pvd_vs_rmu
     VV2 = 0
     com = (/ 0, 0, 1 /)
     dim1_min2 = dim1_min ** 2
-    dim1_max2 = dim1_max2 ** 2
+    dim1_max2 = dim1_max ** 2
     
     do i = 1, ncentres
-  
       ipx = int(centres(1, i) / rgrid + 1.)
       ipy = int(centres(2, i) / rgrid + 1.)
       ipz = int(centres(3, i) / rgrid + 1.)
@@ -183,6 +185,8 @@ program los_pvd_vs_rmu
       do ix = ipx - ndif, ipx + ndif
         do iy = ipy - ndif, ipy + ndif
           do iz = ipz - ndif, ipz + ndif
+
+            if ((ix - ipx)**2 + (iy - ipy)**2 + (iz - ipz)**2 .gt. (ndif+ 1)**2) cycle
     
             ix2 = ix
             iy2 = iy
@@ -264,6 +268,9 @@ program los_pvd_vs_rmu
         write(12, fmt='(3f15.5)') rbin(i), mubin(j), std_vlos(i,j)
       end do
     end do
+
+    call system_clock(end)
+    print *, "elapsed time: ", real(end - beginning) / real(rate)
   
     end program los_pvd_vs_rmu
     

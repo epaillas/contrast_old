@@ -2,8 +2,8 @@ program s_mu_tpcf
     implicit none
 
     real*8 :: rgrid, boxsize, vol, rhomed
-    real*8 :: disx, disy, disz, dis, mu
-    real*8 :: dim1_max, dim1_min
+    real*8 :: disx, disy, disz, dis, dis2, mu
+    real*8 :: dim1_max, dim1_min, dim1_max2, dim1_min2
     real*8 :: muwidth, mumin, mumax
     real*8 :: pi = 4.*atan(1.)
 
@@ -12,6 +12,7 @@ program s_mu_tpcf
     integer*8 :: indx, indy, indz, nrows, ncols
     integer*8 :: ipx, ipy, ipz, ndif
     integer*8 :: ngrid
+    integer*8 :: end, beginning, rate
 
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
@@ -39,6 +40,8 @@ program s_mu_tpcf
         write (*, *) ''
         stop
     end if
+
+    call system_clock(beginning, rate)
 
     call getarg(1, input_tracers)
     call getarg(2, centres_filename)
@@ -161,9 +164,11 @@ program s_mu_tpcf
 
     DD = 0
     delta = 0
+    com = (/0, 0, 1/)
+    dim1_min2 = dim1_min ** 2
+    dim1_max2 = dim1_max ** 2
 
     do i = 1, ncentres
-
         ipx = int(centres(1, i)/rgrid + 1.)
         ipy = int(centres(2, i)/rgrid + 1.)
         ipz = int(centres(3, i)/rgrid + 1.)
@@ -173,6 +178,7 @@ program s_mu_tpcf
         do ix = ipx - ndif, ipx + ndif
             do iy = ipy - ndif, ipy + ndif
                 do iz = ipz - ndif, ipz + ndif
+                    if ((ix - ipx)**2 + (iy - ipy)**2 + (iz - ipz)**2 .gt. (ndif+ 1)**2) cycle
 
                     ix2 = ix
                     iy2 = iy
@@ -200,12 +206,12 @@ program s_mu_tpcf
                             if (disz .lt. -boxsize/2) disz = disz + boxsize
                             if (disz .gt. boxsize/2) disz = disz - boxsize
 
-                            r = (/disx, disy, disz/)
-                            com = (/0, 0, 1/)
-                            dis = norm2(r)
-                            mu = dot_product(r, com)/(norm2(r)*norm2(com))
+                            if (dis2 .gt. dim1_min2 .and. dis2 .lt. dim1_max2) then
 
-                            if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
+                                r = (/disx, disy, disz/)
+                                dis = sqrt(dis2)
+                                mu = dot_product(r, com) / dis
+
                                 rind = 1
                                 do while (dis .gt. rbin_edges(rind + 1))
                                     rind = rind + 1
@@ -240,5 +246,8 @@ program s_mu_tpcf
             write (12, fmt='(3f15.5)') rbin(i), mubin(j), delta(i, j)
         end do
     end do
+
+    call system_clock(end)
+    print *, "elapsed time: ", real(end - beginning) / real(rate)
 
 end program s_mu_tpcf
