@@ -2,9 +2,9 @@ program los_pvd_vs_rmu
     implicit none
     
     real*8 :: rgrid, boxsize
-    real*8 :: disx, disy, disz, dis, mu, vlos
+    real*8 :: disx, disy, disz, dis, dis2, mu, vlos
     real*8 :: velx, vely, velz
-    real*8 :: rwidth, dim1_max, dim1_min
+    real*8 :: rwidth, dim1_max, dim1_min, dim1_max2, dim1_min2
     real*8 :: muwidth, dim2_min, dim2_max
     
     integer*8 :: ntracers, ncentres, dim1_nbin, rind, dim2_nbin, muind
@@ -168,6 +168,9 @@ program los_pvd_vs_rmu
     DD = 0
     VV = 0
     VV2 = 0
+    com = (/ 0, 0, 1 /)
+    dim1_min2 = dim1_min ** 2
+    dim1_max2 = dim1_max2 ** 2
     
     do i = 1, ncentres
   
@@ -207,30 +210,33 @@ program los_pvd_vs_rmu
                 if (disz .lt. -boxsize/2) disz = disz + boxsize
                 if (disz .gt. boxsize/2) disz = disz - boxsize
     
-                r = (/ disx, disy, disz /)
-                dis = norm2(r)
-                com = (/ 0, 0, 1 /)
-                mu = dot_product(r, com) / (norm2(r) * norm2(com))
+                dis2 = disx**2 + disy**2 + disz**2
 
-                if (has_velocity) then
-                  velx = tracers(4, ii) - centres(4, i)
-                  vely = tracers(5, ii) - centres(5, i)
-                  velz = tracers(6, ii) - centres(6, i)
-                else
-                  velx = tracers(4, ii)
-                  vely = tracers(5, ii)
-                  velz = tracers(6, ii)
-                end if
+                if (dis2 .gt. dim1_min2 .and. dis2 .lt. dim1_max2) then
 
-                v = (/ velx, vely, velz /)
-                vlos = dot_product(v, com)
-  
-                if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
+                  r = (/ disx, disy, disz /)
+                  dis = sqrt(dis2)
+                  mu = dot_product(r, com) / dis ! norm2 of com is 1
+
+                  if (has_velocity) then
+                    velx = tracers(4, ii) - centres(4, i)
+                    vely = tracers(5, ii) - centres(5, i)
+                    velz = tracers(6, ii) - centres(6, i)
+                  else
+                    velx = tracers(4, ii)
+                    vely = tracers(5, ii)
+                    velz = tracers(6, ii)
+                  end if
+
+                  v = (/ velx, vely, velz /)
+                  vlos = dot_product(v, com)
+    
                   rind = int((dis - dim1_min) / rwidth + 1)
                   muind = int((mu - dim2_min) / muwidth + 1)
                   DD(rind, muind) = DD(rind, muind) + 1
                   VV(rind, muind) = VV(rind, muind) + vlos
                   VV2(rind, muind) = VV2(rind, muind) + vlos**2
+
                 end if
   
     
