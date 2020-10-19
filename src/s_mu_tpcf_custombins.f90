@@ -206,6 +206,8 @@ program s_mu_tpcf
                             if (disz .lt. -boxsize/2) disz = disz + boxsize
                             if (disz .gt. boxsize/2) disz = disz - boxsize
 
+                            dis2 = disx**2 + disy**2 + disz**2
+
                             if (dis2 .gt. dim1_min2 .and. dis2 .lt. dim1_max2) then
 
                                 r = (/disx, disy, disz/)
