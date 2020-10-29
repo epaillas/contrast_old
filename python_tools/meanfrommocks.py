@@ -3,11 +3,10 @@ import glob
 import click
 import sys
 
-@click.command()
 
+@click.command()
 @click.option('--handle_in', type=str, required=True)
 @click.option('--handle_out', type=str, required=True)
-
 def mean_from_mocks(handle_in,
                     handle_out):
 
@@ -25,17 +24,19 @@ def mean_from_mocks(handle_in,
 
     data_list = np.asarray(data_list)
     data_mean = np.nanmean(data_list, axis=0)
-    data_std = np.nanstd(data_list, axis=0)[:,-1]
+    data_std = np.nanstd(data_list, axis=0)[:, -1]
 
     print('np.shape(data_list): {}'.format(np.shape(data_list)))
     print('np.shape(data_mean): {}'.format(np.shape(data_mean)))
     print('np.shape(data_std): {}'.format(np.shape(data_std)))
 
     cout = np.c_[data_mean, data_std]
+    cout = np.nan_to_num(cout)
 
     fmt = np.shape(cout)[1] * '%15.5f '
 
     np.savetxt(handle_out, cout, fmt=fmt)
+
 
 if __name__ == '__main__':
     mean_from_mocks()
