@@ -1,4 +1,5 @@
 program los_pvd_vs_rmu
+    use procedures
     implicit none
 
     real*8 :: rgrid, boxsize
@@ -205,7 +206,9 @@ program los_pvd_vs_rmu
 
                             v = (/velx, vely, velz/)
                             vrad = dot_product(v, r) / norm2(r)
-                            vtra = norm2(v - vrad * r / norm2(r))
+                            !vtra = norm2(v - vrad * r / norm2(r))
+                            vtra = cross(v, r) / norm2(r)
+
 
                             if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
                                 rind = int((dis - dim1_min)/rwidth + 1)
