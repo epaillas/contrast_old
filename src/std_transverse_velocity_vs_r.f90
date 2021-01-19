@@ -207,7 +207,7 @@ program los_pvd_vs_rmu
                             v = (/velx, vely, velz/)
                             vrad = dot_product(v, r) / norm2(r)
                             !vtra = norm2(v - vrad * r / norm2(r))
-                            vtra = cross(v, r) / norm2(r)
+                            vtra = norm2(cross(v, r) / norm2(r))
 
 
                             if (dis .gt. dim1_min .and. dis .lt. dim1_max) then
