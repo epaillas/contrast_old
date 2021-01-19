@@ -231,7 +231,7 @@ program los_pvd_vs_rmu
 
     open (12, file=output_filename, status='replace')
     do i = 1, dim1_nbin
-        write (12, fmt='(3f15.5)') rbin(i), std_vrad(i)
+        write (12, fmt='(2f15.5)') rbin(i), std_vrad(i)
     end do
 
 end program los_pvd_vs_rmu
