@@ -7,7 +7,7 @@ MLIBS =
 #################
 
 EXES = omp_tpcf.exe tpcf.exe s_mu_tpcf.exe s_pi_tpcf.exe std_los_velocity_vs_rmu.exe s_mu_tpcf_custombins.exe \
-mean_radial_velocity_vs_r.exe std_transverse_velocity_vs_r.exe std_radial_velocity_vs_r.exe neighbour_search.exe
+mean_radial_velocity_vs_r.exe mean_transverse_velocity_vs_r.exe std_transverse_velocity_vs_r.exe std_radial_velocity_vs_r.exe neighbour_search.exe
 
 all: $(EXES)
 
@@ -31,6 +31,9 @@ s_pi_tpcf.exe: s_pi_tpcf.o
 
 mean_radial_velocity_vs_r.exe: mean_radial_velocity_vs_r.o
 	$(FC) mean_radial_velocity_vs_r.o -o mean_radial_velocity_vs_r.exe $(MLIBS)
+
+mean_transverse_velocity_vs_r.exe: mean_transverse_velocity_vs_r.o
+	$(FC) procedures.o mean_transverse_velocity_vs_r.o -o mean_transverse_velocity_vs_r.exe $(MLIBS)
 
 std_radial_velocity_vs_r.exe: std_radial_velocity_vs_r.o
 	$(FC) std_radial_velocity_vs_r.o -o std_radial_velocity_vs_r.exe $(MLIBS)
@@ -59,6 +62,9 @@ s_pi_tpcf.o: s_pi_tpcf.f90
 
 mean_radial_velocity_vs_r.o: mean_radial_velocity_vs_r.f90
 	$(FC) -c mean_radial_velocity_vs_r.f90
+
+mean_transverse_velocity_vs_r.o: mean_transverse_velocity_vs_r.f90
+	$(FC) -c procedures.f90  mean_transverse_velocity_vs_r.f90
 
 std_radial_velocity_vs_r.o: std_radial_velocity_vs_r.f90
 	$(FC) -c std_radial_velocity_vs_r.f90
