@@ -94,8 +94,8 @@ program mean_velocity_sphere
     end if
     write(*,*) 'ncentres dim: ', size(centres, dim=1), size(centres, dim=2)
   
-    allocate(DD(ntracers))
-    allocate(VV(3, ntracers))
+    allocate(DD(ncentres))
+    allocate(VV(3, ncentres))
     
     ! Construct linked list for tracers
     write(*,*) ''
