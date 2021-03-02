@@ -1,22 +1,24 @@
 program tpcf
     implicit none
     
-    real*8 :: rgrid, boxsize, vol, rhomed
+    real*8 :: rgrid_x, rgrid_y, rgrid_z, vol, rhomean
+    real*8 :: boxsize, boxsize_x, boxsize_y, boxsize_z
     real*8 :: disx, disy, disz, dis, dis2
     real*8 :: rwidth, dim1_max, dim1_min, dim1_max2, dim1_min2
     real*8 :: pi = 4.*atan(1.)
+    real*8 :: qperp, qpara
     
     integer*8 :: ntracers, ncentres, dim1_nbin, rind
     integer*8 :: i, ii, ix, iy, iz, ix2, iy2, iz2
     integer*8 :: indx, indy, indz, nrows, ncols
-    integer*8 :: ipx, ipy, ipz, ndif
+    integer*8 :: ipx, ipy, ipz, ndif, ndif_x, ndif_y, ndif_z
     integer*8 :: ngrid
     integer*8 :: end, beginning, rate
+    integer*4 :: argstat1, argstat2
     
     integer*8, dimension(:, :, :), allocatable :: lirst, nlirst
     integer*8, dimension(:), allocatable :: ll
     
-    real*8, dimension(3) :: r
     real*8, allocatable, dimension(:,:)  :: tracers, centres
     real*8, dimension(:), allocatable :: DD, delta
     real*8, dimension(:), allocatable :: rbin, rbin_edges
@@ -24,6 +26,7 @@ program tpcf
     character(20), external :: str
     character(len=500) :: data_filename, data_filename_2, output_filename
     character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
+    character(len=10) :: qperp_char, qpara_char
     
     if (iargc() .ne. 8) then
         write(*,*) 'Some arguments are missing.'
@@ -35,29 +38,41 @@ program tpcf
         write(*,*) '6) dim1_max'
         write(*,*) '7) dim1_nbin'
         write(*,*) '8) ngrid'
+        write(*,*) '9) qperp (optional)'
+        write(*,*) '10) qpara (optional)'
         write(*,*) ''
         stop
       end if
 
       call system_clock(beginning, rate)
       
-    call getarg(1, data_filename)
-    call getarg(2, data_filename_2)
-    call getarg(3, output_filename)
-    call getarg(4, box_char)
-    call getarg(5, dim1_min_char)
-    call getarg(6, dim1_max_char)
-    call getarg(7, dim1_nbin_char)
-    call getarg(8, ngrid_char)
+    call get_command_argument(number=1, value=data_filename)
+    call get_command_argument(number=2, value=data_filename_2)
+    call get_command_argument(number=3, value=output_filename)
+    call get_command_argument(number=4, value=box_char)
+    call get_command_argument(number=5, value=dim1_min_char)
+    call get_command_argument(number=6, value=dim1_max_char)
+    call get_command_argument(number=7, value=dim1_nbin_char)
+    call get_command_argument(number=8, value=ngrid_char)
+    call get_command_argument(number=9, value=qperp_char, status=argstat1)
+    call get_command_argument(number=10, value=qpara_char, status=argstat2)
     
     read(box_char, *) boxsize
     read(dim1_min_char, *) dim1_min
     read(dim1_max_char, *) dim1_max
     read(dim1_nbin_char, *) dim1_nbin
     read(ngrid_char, *) ngrid
+
+    if (argstat1 == 0 .and. argstat2 == 0) then
+      read(qperp_char, *) qperp
+      read(qpara_char, *) qpara
+    else
+      qperp = 1.0
+      qpara = 1.0
+    end if
     
     write(*,*) '-----------------------'
-    write(*,*) 'Running CF_xi_vs_r.exe'
+    write(*,*) 'Running tpcf.exe'
     write(*,*) 'input parameters:'
     write(*,*) ''
     write(*, *) 'data_filename: ', trim(data_filename)
@@ -69,7 +84,7 @@ program tpcf
     write(*, *) 'dim1_nbin: ', trim(dim1_nbin_char)
     write(*, *) 'ngrid: ', trim(ngrid_char)
     write(*,*) ''
-  
+
     open(10, file=data_filename, status='old', form='unformatted')
     read(10) nrows
     read(10) ncols
@@ -88,6 +103,30 @@ program tpcf
     close(11)
     ncentres = nrows
     write(*,*) 'ncentres dim: ', size(centres, dim=1), size(centres, dim=2)
+
+    ! Account for potential geometrical distortions
+    boxsize_x = boxsize / qperp
+    boxsize_y = boxsize / qperp
+    boxsize_z = boxsize / qpara
+
+    tracers(1,:) = tracers(1,:) / qperp
+    tracers(2,:) = tracers(2,:) / qperp
+    tracers(3,:) = tracers(3,:) / qpara
+
+    centres(1,:) = centres(1,:) / qperp
+    centres(2,:) = centres(2,:) / qperp
+    centres(3,:) = centres(3,:) / qpara
+
+
+    if (qperp .ne. 1.0 .or. qpara .ne. 1.0) then
+      write(*,*) 'Positions have been shifted due to geometrical distortions'
+      write(*,*) 'qperp, qpara: ', qperp, qpara
+      write(*,*) 'boxsize_x: ', boxsize_x
+      write(*,*) 'boxsize_y: ', boxsize_y
+      write(*,*) 'boxsize_z: ', boxsize_z
+      write(*,*) 'tracers(min), tracers(max) = ', minval(tracers(1,:)), maxval(tracers(1,:))
+      write(*,*) 'centres(min), centres(max) = ', minval(centres(1,:)), maxval(centres(1,:))
+    end if
   
     allocate(rbin(dim1_nbin))
     allocate(rbin_edges(dim1_nbin + 1))
@@ -103,7 +142,7 @@ program tpcf
     end do
     
     ! Mean density inside the box
-    rhomed = ntracers / (boxsize ** 3)
+    rhomean = ntracers / (boxsize_x * boxsize_y * boxsize_z)
     
     ! Construct linked list for tracers
     write(*,*) ''
@@ -111,15 +150,17 @@ program tpcf
     allocate(lirst(ngrid, ngrid, ngrid))
     allocate(nlirst(ngrid, ngrid, ngrid))
     allocate(ll(ntracers))
-    rgrid = (boxsize) / real(ngrid)
+    rgrid_x = (boxsize_x) / real(ngrid)
+    rgrid_y = (boxsize_y) / real(ngrid)
+    rgrid_z = (boxsize_z) / real(ngrid)
     
     lirst = 0
     ll = 0
     
     do i = 1, ntracers
-      indx = int((tracers(1, i)) / rgrid + 1.)
-      indy = int((tracers(2, i)) / rgrid + 1.)
-      indz = int((tracers(3, i)) / rgrid + 1.)
+      indx = int((tracers(1, i)) / rgrid_x + 1.)
+      indy = int((tracers(2, i)) / rgrid_y + 1.)
+      indz = int((tracers(3, i)) / rgrid_z + 1.)
     
       if(indx.gt.0.and.indx.le.ngrid.and.indy.gt.0.and.indy.le.ngrid.and.&
       indz.gt.0.and.indz.le.ngrid)lirst(indx,indy,indz)=i
@@ -130,9 +171,9 @@ program tpcf
     end do
     
     do i = 1, ntracers
-      indx = int((tracers(1, i))/ rgrid + 1.)
-      indy = int((tracers(2, i))/ rgrid + 1.)
-      indz = int((tracers(3, i))/ rgrid + 1.)
+      indx = int((tracers(1, i))/ rgrid_x + 1.)
+      indy = int((tracers(2, i))/ rgrid_y + 1.)
+      indz = int((tracers(3, i))/ rgrid_z + 1.)
       if(indx.gt.0.and.indx.le.ngrid.and.indy.gt.0.and.indy.le.ngrid.and.&
       &indz.gt.0.and.indz.le.ngrid) then
         ll(lirst(indx,indy,indz)) = i
@@ -150,15 +191,17 @@ program tpcf
     dim1_max2 = dim1_max ** 2
     
     do i = 1, ncentres
-      ipx = int(centres(1, i) / rgrid + 1.)
-      ipy = int(centres(2, i) / rgrid + 1.)
-      ipz = int(centres(3, i) / rgrid + 1.)
+      ipx = int(centres(1, i) / rgrid_x + 1.)
+      ipy = int(centres(2, i) / rgrid_y + 1.)
+      ipz = int(centres(3, i) / rgrid_z + 1.)
   
-      ndif = int(dim1_max / rgrid + 1.)
+      ndif_x = int(dim1_max / rgrid_x + 1.)
+      ndif_y = int(dim1_max / rgrid_y + 1.)
+      ndif_z = int(dim1_max / rgrid_z + 1.)
     
-      do ix = ipx - ndif, ipx + ndif
-        do iy = ipy - ndif, ipy + ndif
-          do iz = ipz - ndif, ipz + ndif
+      do ix = ipx - ndif_x, ipx + ndif_x
+        do iy = ipy - ndif_y, ipy + ndif_y
+          do iz = ipz - ndif_z, ipz + ndif_z
             if ((ix - ipx)**2 + (iy - ipy)**2 + (iz - ipz)**2 .gt. (ndif+ 1)**2) cycle
     
             ix2 = ix
@@ -180,12 +223,12 @@ program tpcf
                 disy = tracers(2, ii) - centres(2, i)
                 disz = tracers(3, ii) - centres(3, i)
   
-                if (disx .lt. -boxsize/2) disx = disx + boxsize
-                if (disx .gt. boxsize/2) disx = disx - boxsize
-                if (disy .lt. -boxsize/2) disy = disy + boxsize
-                if (disy .gt. boxsize/2) disy = disy - boxsize
-                if (disz .lt. -boxsize/2) disz = disz + boxsize
-                if (disz .gt. boxsize/2) disz = disz - boxsize
+                if (disx .lt. -boxsize_x/2) disx = disx + boxsize_x
+                if (disx .gt. boxsize_x/2) disx = disx - boxsize_x
+                if (disy .lt. -boxsize_y/2) disy = disy + boxsize_y
+                if (disy .gt. boxsize_y/2) disy = disy - boxsize_y
+                if (disz .lt. -boxsize_z/2) disz = disz + boxsize_z
+                if (disz .gt. boxsize_z/2) disz = disz - boxsize_z
 
                 dis2 = disx ** 2 + disy ** 2 + disz ** 2
 
@@ -206,7 +249,7 @@ program tpcf
   
     do i = 1, dim1_nbin
       vol = 4./3 * pi * (rbin_edges(i + 1) ** 3 - rbin_edges(i) ** 3)
-      delta(i) = DD(i) / (vol * rhomed * ncentres) - 1
+      delta(i) = DD(i) / (vol * rhomean * ncentres) - 1
     end do
     
     write(*,*) ''
