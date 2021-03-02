@@ -28,7 +28,7 @@ program tpcf
     character(len=10) :: dim1_max_char, dim1_min_char, dim1_nbin_char, ngrid_char, box_char
     character(len=10) :: qperp_char, qpara_char
     
-    if (iargc() .ne. 8) then
+    if (iargc() .lt. 8) then
         write(*,*) 'Some arguments are missing.'
         write(*,*) '1) data_filename'
         write(*,*) '2) data_filename_2'
