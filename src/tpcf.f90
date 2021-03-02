@@ -142,7 +142,7 @@ program tpcf
     end do
     
     ! Mean density inside the box
-    rhomean = ntracers / (boxsize_x * boxsize_y * boxsize_z)
+    rhomean = ntracers / (boxsize**3)
     
     ! Construct linked list for tracers
     write(*,*) ''
