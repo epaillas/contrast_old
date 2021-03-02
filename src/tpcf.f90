@@ -202,7 +202,7 @@ program tpcf
       do ix = ipx - ndif_x, ipx + ndif_x
         do iy = ipy - ndif_y, ipy + ndif_y
           do iz = ipz - ndif_z, ipz + ndif_z
-            if ((ix - ipx)**2 + (iy - ipy)**2 + (iz - ipz)**2 .gt. (ndif+ 1)**2) cycle
+            !if ((ix - ipx)**2 + (iy - ipy)**2 + (iz - ipz)**2 .gt. (ndif+ 1)**2) cycle
     
             ix2 = ix
             iy2 = iy
