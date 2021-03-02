@@ -15,6 +15,8 @@ import click
 @click.option('--dim2_max', type=float)
 @click.option('--dim2_nbin', type=int)
 @click.option('--data_filename_2', type=str)
+@click.option('--qperp', type=float, default=1.0)
+@click.option('--qpara', type=float, default=1.0)
 def run_contrast(
     data_filename,
     data_filename_2,
@@ -28,6 +30,8 @@ def run_contrast(
     dim2_max,
     dim2_nbin,
     ngrid,
+    qperp,
+    qpara
 ):
 
     Correlator(
@@ -42,7 +46,9 @@ def run_contrast(
         dim2_min=dim2_min,
         dim2_max=dim2_max,
         dim2_nbin=dim2_nbin,
-        ngrid=ngrid
+        ngrid=ngrid,
+        qperp=qperp,
+        qpara=qpara
     )
 
 

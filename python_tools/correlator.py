@@ -18,7 +18,9 @@ class Correlator:
                  dim2_min,
                  dim2_max,
                  dim2_nbin,
-                 ngrid):
+                 ngrid,
+                 qperp,
+                 qpara):
 
         # declare attributes
         self.output_filename = output_filename
@@ -42,6 +44,8 @@ class Correlator:
         self.dim1_nbin = dim1_nbin
         self.dim2_nbin = dim2_nbin
         self.ngrid = ngrid
+        self.qperp = qperp
+        self.qpara = qpara
 
         print('Running contrast with the following parameters:\n')
         print('corr_type: {}'.format(self.corr_type))
@@ -77,7 +81,9 @@ class Correlator:
                str(self.dim1_min),
                str(self.dim1_max),
                str(self.dim1_nbin),
-               str(self.ngrid)]
+               str(self.ngrid),
+               str(self.qperp),
+               str(self.qpara)]
 
         log = open(log_filename, 'w+')
         subprocess.run(cmd, stdout=log, stderr=log)
